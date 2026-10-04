@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { SoglieProvider } from './context/SoglieContext'; // NUOVO - Provider soglie globali
+import ConfigSoglieUI from './components/ConfigSoglieUI'; // NUOVO - Pannello configurazione soglie
 import ResocontoAnalisi from './components/ResocontoAnalisi'; // NUOVO
 import AnalisiMultipla from './components/AnalisiMultipla'; // NUOVO - Analisi multi-giornata
 import TabellaAnalisiIncrociata from './components/TabellaAnalisiIncrociata'; // NUOVO - Tabella pivot Zona × Tipologia
@@ -646,6 +648,7 @@ export default function App() {
   };
 
   return (
+    <SoglieProvider>
     <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <header style={{ background: '#1e40af', color: '#fff', padding: '16px', textAlign: 'center' }}>
         <h1 style={{ margin: 0, fontSize: 'clamp(1.25rem, 4vw, 1.5rem)' }}>🏐 Scouting Ricezione</h1>
@@ -654,6 +657,11 @@ export default function App() {
           📅 {currentTime}
         </p>
       </header>
+
+      {/* NUOVO - Pannello Configurazione Soglie Globali */}
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(8px, 2vw, 16px)' }}>
+        <ConfigSoglieUI />
+      </div>
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(8px, 2vw, 16px)' }}>
         <section style={cardStyle}>
@@ -1780,6 +1788,7 @@ export default function App() {
         <AnalisiMultipla />
       </div>
     </div>
+    </SoglieProvider>
   );
 }
 

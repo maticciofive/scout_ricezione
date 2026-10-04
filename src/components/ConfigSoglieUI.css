@@ -1,0 +1,179 @@
+/**
+ * Stili per il componente di configurazione soglie
+ * NUOVO FILE
+ */
+
+.config-soglie-container {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: clamp(16px, 3vw, 24px);
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.config-soglie-titolo {
+  margin: 0 0 8px 0;
+  color: #1e40af;
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+}
+
+.config-soglie-descrizione {
+  margin: 0 0 20px 0;
+  color: #6b7280;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+}
+
+.config-soglie-errori {
+  background: #fee2e2;
+  border-left: 4px solid #dc2626;
+  padding: 12px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  color: #991b1b;
+}
+
+.config-soglie-errori ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+}
+
+.config-soglie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.config-soglie-sezione {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.config-soglie-sezione-titolo {
+  margin: 0 0 4px 0;
+  color: #374151;
+  font-size: clamp(1rem, 3vw, 1.2rem);
+}
+
+.config-soglie-sezione-descrizione {
+  margin: 0 0 16px 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.config-soglie-input-group {
+  margin-bottom: 12px;
+}
+
+.config-soglie-input-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.config-soglie-input {
+  width: 70px;
+  padding: 6px 10px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.config-soglie-input:hover {
+  border-color: #3b82f6;
+}
+
+.config-soglie-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.config-soglie-anteprima {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.config-soglie-anteprima-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.config-soglie-anteprima-item.verde {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.config-soglie-anteprima-item.arancione {
+  background: #fed7aa;
+  color: #92400e;
+}
+
+.config-soglie-anteprima-item.rosso {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.config-soglie-bottoni {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.config-soglie-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.config-soglie-btn.salva {
+  background: #10b981;
+  color: white;
+}
+
+.config-soglie-btn.salva:hover {
+  background: #059669;
+}
+
+.config-soglie-btn.reset {
+  background: #6b7280;
+  color: white;
+}
+
+.config-soglie-btn.reset:hover {
+  background: #4b5563;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .config-soglie-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .config-soglie-bottoni {
+    flex-direction: column;
+  }
+
+  .config-soglie-btn {
+    width: 100%;
+  }
+}
