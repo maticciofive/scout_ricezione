@@ -12,6 +12,8 @@ export default function ConfigSoglieUI() {
   const { soglie, aggiornaSoglie, resettaSoglie } = useSoglie();
   const [soglieLocali, setSoglieLocali] = useState<SoglieConfig>(soglie);
   const [errori, setErrori] = useState<string[]>([]);
+  const [espanso, setEspanso] = useState(false); // NUOVO - Stato per accordion
+  const [attivato, setAttivato] = useState(true); // NUOVO - Stato per attivare/disattivare visualizzazione
 
   // Aggiorna lo stato locale quando le soglie globali cambiano
   useEffect(() => {
@@ -97,23 +99,46 @@ export default function ConfigSoglieUI() {
 
   return (
     <div className="config-soglie-container">
-      <h2 className="config-soglie-titolo">⚙️ Configurazione Soglie Globali</h2>
-      <p className="config-soglie-descrizione">
-        Queste soglie si applicano a tutte le analisi e tabelle dell'applicazione
-      </p>
-
-      {errori.length > 0 && (
-        <div className="config-soglie-errori">
-          <strong>⚠️ Errori di validazione:</strong>
-          <ul>
-            {errori.map((err, i) => (
-              <li key={i}>{err}</li>
-            ))}
-          </ul>
+      <div className="config-soglie-header">
+        <div className="config-soglie-header-left">
+          <h2 className="config-soglie-titolo">⚙️ Configurazione Soglie Globali</h2>
+          <p className="config-soglie-descrizione">
+            Queste soglie si applicano a tutte le analisi e tabelle dell'applicazione
+          </p>
         </div>
-      )}
+        <div className="config-soglie-header-right">
+          <label className="config-soglie-toggle-attivazione">
+            <input
+              type="checkbox"
+              checked={attivato}
+              onChange={(e) => setAttivato(e.target.checked)}
+              className="config-soglie-checkbox"
+            />
+            <span>Attiva evidenziazione</span>
+          </label>
+          <button
+            onClick={() => setEspanso(!espanso)}
+            className="config-soglie-accordion-btn"
+          >
+            {espanso ? '▲ Nascondi' : '▼ Mostra'}
+          </button>
+        </div>
+      </div>
 
-      <div className="config-soglie-grid">
+      {espanso && (
+        <>
+          {errori.length > 0 && (
+            <div className="config-soglie-errori">
+              <strong>⚠️ Errori di validazione:</strong>
+              <ul>
+                {errori.map((err, i) => (
+                  <li key={i}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="config-soglie-grid">
         {/* Sezione Positivi */}
         <div className="config-soglie-sezione">
           <h3 className="config-soglie-sezione-titolo">
@@ -271,14 +296,16 @@ export default function ConfigSoglieUI() {
         </div>
       </div>
 
-      <div className="config-soglie-bottoni">
-        <button onClick={handleSalva} className="config-soglie-btn salva">
-          💾 Salva Configurazione
-        </button>
-        <button onClick={handleReset} className="config-soglie-btn reset">
-          🔄 Reset Default
-        </button>
-      </div>
+          <div className="config-soglie-bottoni">
+            <button onClick={handleSalva} className="config-soglie-btn salva">
+              💾 Salva Configurazione
+            </button>
+            <button onClick={handleReset} className="config-soglie-btn reset">
+              🔄 Reset Default
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
