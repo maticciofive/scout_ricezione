@@ -17,7 +17,7 @@ export interface AnalisiCondizione {
 }
 
 export interface AnalisiGiocatore {
-  giocatoreId: number;
+  giocatoreIndex: number; // FIX MAPPING ID: Ora è l'indice, non l'ID
   giocatoreNome: string;
   datiInsufficienti: boolean;
   totaleColpi: number;
@@ -67,19 +67,21 @@ const TIPOLOGIE = ['Flottante', 'Jump Top Spin', 'Jump Flottante'];
 
 /**
  * Genera l'analisi completa per un giocatore
+ * FIX MAPPING ID: giocatoreIndex è l'indice dell'array (0, 1, 2...)
+ * che corrisponde a playerIndex nei colpi salvati
  */
 export function generaAnalisiCompleta(
-  giocatoreId: number,
+  giocatoreIndex: number,
   giocatoreNome: string,
   tuttiIColpi: Colpo[]
 ): AnalisiGiocatore {
-  const colpiGiocatore = tuttiIColpi.filter(c => (c as any).playerIndex === giocatoreId);
+  const colpiGiocatore = tuttiIColpi.filter(c => (c as any).playerIndex === giocatoreIndex);
   const totaleColpi = colpiGiocatore.length;
 
   // Dati insufficienti
   if (totaleColpi < 5) {
     return {
-      giocatoreId,
+      giocatoreIndex,
       giocatoreNome,
       datiInsufficienti: true,
       totaleColpi,
@@ -225,7 +227,7 @@ export function generaAnalisiCompleta(
   const sintesi = generaSintesi(giocatoreNome, metricheGlobali, puntiDiForza, puntiDeboli);
 
   return {
-    giocatoreId,
+    giocatoreIndex,
     giocatoreNome,
     datiInsufficienti: false,
     totaleColpi,
