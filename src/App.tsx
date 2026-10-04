@@ -12,6 +12,8 @@ interface Reception {
   playerName: string;
   zone: number;
   side: string;
+  serveType: string;
+  serveZone: number;
   fundamental: string;
   direction: string;
   outcome: string;
@@ -20,6 +22,20 @@ interface Reception {
 
 const ALL_ZONES = [4, 3, 2, 7, 8, 9, 5, 6, 1];
 const ZONE_GRID = [[4, 3, 2], [7, 8, 9], [5, 6, 1]];
+
+const SERVE_TYPES = [
+  { key: 'F', label: 'Float', emoji: '🎯' },
+  { key: 'SF', label: 'Salto Float', emoji: '🏐' },
+  { key: 'SS', label: 'Salto Spin', emoji: '💫' },
+  { key: 'SP', label: 'Splot', emoji: '⚡' },
+  { key: 'FL', label: 'Flin', emoji: '🌀' },
+];
+
+const SERVE_ZONES = [
+  { zone: 1, label: 'Zona 1' },
+  { zone: 5, label: 'Zona 5' },
+  { zone: 6, label: 'Zona 6' },
+];
 
 const FUNDAMENTALS = [
   { key: 'B', label: 'Bagher', emoji: '🤲' },
@@ -85,9 +101,11 @@ export default function App() {
   const [receptions, setReceptions] = useState<Reception[]>(() => loadJSON<Reception[]>('vb_receptions', []));
   const [playerCount, setPlayerCount] = useState<number>(() => loadJSON<number>('vb_count', 3));
   const [selectedPlayerIdx, setSelectedPlayerIdx] = useState<number | null>(null);
+  const [selectedServeType, setSelectedServeType] = useState<string | null>(null);
+  const [selectedServeZone, setSelectedServeZone] = useState<number | null>(null);
   const [selectedFundamental, setSelectedFundamental] = useState<string | null>(null);
   const [selectedDir, setSelectedDir] = useState<string | null>(null);
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
   const [showConfig, setShowConfig] = useState(false);
   const [tempCount, setTempCount] = useState(playerCount);
 
@@ -119,23 +137,35 @@ export default function App() {
 
   const selectPlayer = (idx: number) => {
     setSelectedPlayerIdx(idx);
+    setSelectedServeType(null);
+    setSelectedServeZone(null);
     setSelectedFundamental(null);
     setSelectedDir(null);
     setStep(2);
   };
 
+  const selectServeType = (serveType: string) => {
+    setSelectedServeType(serveType);
+    setStep(3);
+  };
+
+  const selectServeZone = (serveZone: number) => {
+    setSelectedServeZone(serveZone);
+    setStep(4);
+  };
+
   const selectFundamental = (fundamental: string) => {
     setSelectedFundamental(fundamental);
-    setStep(3);
+    setStep(5);
   };
 
   const selectDirection = (dir: string) => {
     setSelectedDir(dir);
-    setStep(4);
+    setStep(6);
   };
 
   const selectOutcome = (outcome: string) => {
-    if (selectedPlayerIdx === null || selectedFundamental === null || selectedDir === null) return;
+    if (selectedPlayerIdx === null || selectedServeType === null || selectedServeZone === null || selectedFundamental === null || selectedDir === null) return;
     const player = players[selectedPlayerIdx];
     const rec: Reception = {
       id: Date.now(),
@@ -143,6 +173,8 @@ export default function App() {
       playerName: player.name,
       zone: player.zone,
       side: getSideForZone(player.zone),
+      serveType: selectedServeType,
+      serveZone: selectedServeZone,
       fundamental: selectedFundamental,
       direction: selectedDir,
       outcome,
@@ -150,6 +182,8 @@ export default function App() {
     };
     setReceptions(prev => [...prev, rec]);
     setSelectedPlayerIdx(null);
+    setSelectedServeType(null);
+    setSelectedServeZone(null);
     setSelectedFundamental(null);
     setSelectedDir(null);
     setStep(1);
@@ -166,6 +200,8 @@ export default function App() {
     setTempCount(3);
     setReceptions([]);
     setSelectedPlayerIdx(null);
+    setSelectedServeType(null);
+    setSelectedServeZone(null);
     setSelectedFundamental(null);
     setSelectedDir(null);
     setStep(1);
@@ -179,9 +215,11 @@ export default function App() {
     DIRECTIONS.forEach(d => { dirMap[d.key] = d.label; });
     const fundMap: Record<string, string> = {};
     FUNDAMENTALS.forEach(f => { fundMap[f.key] = f.label; });
-    const headers = ['Giocatore', 'Zona', 'Lato', 'Fondamentale', 'Punto di ricezione', 'Esito', 'Data e ora'];
+    const serveTypeMap: Record<string, string> = {};
+    SERVE_TYPES.forEach(s => { serveTypeMap[s.key] = s.label; });
+    const headers = ['Giocatore', 'Zona', 'Lato', 'Tipo Battuta', 'Zona Battuta', 'Fondamentale', 'Punto di ricezione', 'Esito', 'Data e ora'];
     const rows = receptions.map(r =>
-      [r.playerName, r.zone, r.side, fundMap[r.fundamental] || r.fundamental, dirMap[r.direction] || r.direction, r.outcome, r.timestamp].join(';')
+      [r.playerName, r.zone, r.side, serveTypeMap[r.serveType] || r.serveType, r.serveZone, fundMap[r.fundamental] || r.fundamental, dirMap[r.direction] || r.direction, r.outcome, r.timestamp].join(';')
     );
     const csv = '\uFEFF' + [headers.join(';'), ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -204,13 +242,15 @@ export default function App() {
     return { total, counts };
   };
 
-  const getDirectionStats = (playerIdx: number | null, side: string, fundamental?: string) => {
+  const getDirectionStats = (playerIdx: number | null, side: string, fundamental?: string, serveType?: string, serveZone?: number) => {
     const sideZones = SIDES[side];
     const filtered = receptions.filter(r => {
       const matchPlayer = playerIdx === null || r.playerIndex === playerIdx;
       const matchSide = sideZones.includes(r.zone);
       const matchFund = !fundamental || r.fundamental === fundamental;
-      return matchPlayer && matchSide && matchFund;
+      const matchServeType = !serveType || r.serveType === serveType;
+      const matchServeZone = !serveZone || r.serveZone === serveZone;
+      return matchPlayer && matchSide && matchFund && matchServeType && matchServeZone;
     });
     const total = filtered.length;
     const counts: Record<string, number> = {};
@@ -222,10 +262,14 @@ export default function App() {
   const guideMsg = step === 1
     ? '👆 Tocca un giocatore sul campo'
     : step === 2
-      ? '🏐 Scegli il fondamentale usato'
+      ? '🏐 Scegli il tipo di battuta'
       : step === 3
-        ? '🎯 Scegli dove ha colpito la palla rispetto al corpo'
-        : '✅ Scegli l\'esito della ricezione';
+        ? '📍 Scegli la zona di provenienza della battuta'
+        : step === 4
+          ? '🤲 Scegli il fondamentale usato'
+          : step === 5
+            ? '🎯 Scegli dove ha colpito la palla rispetto al corpo'
+            : '✅ Scegli l\'esito della ricezione';
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -281,6 +325,73 @@ export default function App() {
             </div>
           )}
         </section>
+
+        {step === 2 && (
+          <section style={cardStyle}>
+            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Tipo di Battuta</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
+              {SERVE_TYPES.map(s => (
+                <button
+                  key={s.key}
+                  onClick={() => selectServeType(s.key)}
+                  style={{
+                    width: 'clamp(80px, 22vw, 100px)',
+                    height: 'clamp(70px, 18vw, 85px)',
+                    borderRadius: '12px',
+                    background: selectedServeType === s.key ? '#2563eb' : '#f3f4f6',
+                    color: selectedServeType === s.key ? '#fff' : '#374151',
+                    border: selectedServeType === s.key ? '3px solid #1d4ed8' : '2px solid #d1d5db',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>{s.emoji}</span>
+                  <span style={{ fontSize: 'clamp(0.7rem, 2.5vw, 0.85rem)', marginTop: '2px', fontWeight: 700 }}>{s.key}</span>
+                  <span style={{ fontSize: 'clamp(0.6rem, 2vw, 0.7rem)', marginTop: '2px' }}>{s.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {step === 3 && (
+          <section style={cardStyle}>
+            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Zona di Provenienza della Battuta</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
+              {SERVE_ZONES.map(sz => (
+                <button
+                  key={sz.zone}
+                  onClick={() => selectServeZone(sz.zone)}
+                  style={{
+                    width: 'clamp(90px, 25vw, 110px)',
+                    height: 'clamp(70px, 18vw, 85px)',
+                    borderRadius: '12px',
+                    background: selectedServeZone === sz.zone ? '#2563eb' : '#f3f4f6',
+                    color: selectedServeZone === sz.zone ? '#fff' : '#374151',
+                    border: selectedServeZone === sz.zone ? '3px solid #1d4ed8' : '2px solid #d1d5db',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: 'clamp(1.5rem, 6vw, 2rem)' }}>📍</span>
+                  <span style={{ fontSize: 'clamp(0.875rem, 3vw, 1rem)', marginTop: '4px' }}>{sz.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section style={cardStyle}>
           <h2 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>Campo da Gioco</h2>
@@ -351,7 +462,7 @@ export default function App() {
           <p style={{ textAlign: 'center', marginTop: '12px', fontSize: 'clamp(0.75rem, 3vw, 0.875rem)', color: '#6b7280', fontStyle: 'italic' }}>{guideMsg}</p>
         </section>
 
-        {step === 2 && (
+        {step === 4 && (
           <section style={cardStyle}>
             <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Quale fondamentale hai usato?</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
@@ -384,7 +495,7 @@ export default function App() {
           </section>
         )}
 
-        {step === 3 && (
+        {step === 5 && (
           <section style={cardStyle}>
             <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Dove ha colpito la palla?</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxWidth: '280px', margin: '0 auto' }}>
@@ -416,7 +527,7 @@ export default function App() {
           </section>
         )}
 
-        {step === 4 && (
+        {step === 6 && (
           <section style={cardStyle}>
             <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Esito della ricezione</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
@@ -759,6 +870,163 @@ export default function App() {
                       </td>
                     ));
                   })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Statistiche per Tipo di Battuta */}
+        <section style={cardStyle}>
+          <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>🏐 Statistiche per Tipo di Battuta</h2>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px', fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Giocatore</th>
+                  <th style={thStyle}>Tipo Battuta</th>
+                  <th style={thStyle}>Tot</th>
+                  {OUTCOMES.map(o => (
+                    <th key={o.key} style={thStyle}>
+                      <span style={{ display: 'inline-block', width: '24px', height: '24px', borderRadius: '50%', background: o.bg, color: o.fg, lineHeight: '24px', fontSize: '12px', fontWeight: 700 }}>{o.key}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((p, idx) => (
+                  SERVE_TYPES.map(s => {
+                    const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.serveType === s.key);
+                    if (total === 0) return null;
+                    return (
+                      <tr key={`${idx}-${s.key}`} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                        <td style={tdStyle}>{p.name}</td>
+                        <td style={tdStyle}>{s.emoji} {s.label}</td>
+                        <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
+                        {OUTCOMES.map(o => (
+                          <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                            <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
+                            <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })
+                ))}
+                <tr style={{ background: '#dbeafe', fontWeight: 700 }}>
+                  <td style={tdStyle} colSpan={2}>SQUADRA</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>{receptions.length}</td>
+                  {OUTCOMES.map(o => {
+                    const c = receptions.filter(r => r.outcome === o.key).length;
+                    return (
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                        <div>{c}</div>
+                        <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, receptions.length)}</div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Statistiche per Zona di Provenienza */}
+        <section style={cardStyle}>
+          <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>📍 Statistiche per Zona di Provenienza</h2>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px', fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Giocatore</th>
+                  <th style={thStyle}>Zona Battuta</th>
+                  <th style={thStyle}>Tot</th>
+                  {OUTCOMES.map(o => (
+                    <th key={o.key} style={thStyle}>
+                      <span style={{ display: 'inline-block', width: '24px', height: '24px', borderRadius: '50%', background: o.bg, color: o.fg, lineHeight: '24px', fontSize: '12px', fontWeight: 700 }}>{o.key}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((p, idx) => (
+                  SERVE_ZONES.map(sz => {
+                    const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.serveZone === sz.zone);
+                    if (total === 0) return null;
+                    return (
+                      <tr key={`${idx}-${sz.zone}`} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                        <td style={tdStyle}>{p.name}</td>
+                        <td style={tdStyle}>{sz.label}</td>
+                        <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
+                        {OUTCOMES.map(o => (
+                          <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                            <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
+                            <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })
+                ))}
+                <tr style={{ background: '#dbeafe', fontWeight: 700 }}>
+                  <td style={tdStyle} colSpan={2}>SQUADRA</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>{receptions.length}</td>
+                  {OUTCOMES.map(o => {
+                    const c = receptions.filter(r => r.outcome === o.key).length;
+                    return (
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                        <div>{c}</div>
+                        <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, receptions.length)}</div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Tabella Incrociata: Tipo Battuta x Zona Provenienza */}
+        <section style={cardStyle}>
+          <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>📊 Distribuzione: Tipo Battuta x Zona Provenienza</h2>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '400px', fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Tipo Battuta</th>
+                  {SERVE_ZONES.map(sz => (
+                    <th key={sz.zone} style={thStyle}>{sz.label}</th>
+                  ))}
+                  <th style={thStyle}>Totale</th>
+                </tr>
+              </thead>
+              <tbody>
+                {SERVE_TYPES.map(s => (
+                  <tr key={s.key} style={{ background: '#fff' }}>
+                    <td style={tdStyle}>{s.emoji} {s.label}</td>
+                    {SERVE_ZONES.map(sz => {
+                      const count = receptions.filter(r => r.serveType === s.key && r.serveZone === sz.zone).length;
+                      const total = receptions.filter(r => r.serveType === s.key).length;
+                      return (
+                        <td key={sz.zone} style={{ ...tdStyle, textAlign: 'center' }}>
+                          <div style={{ fontWeight: 700 }}>{count}</div>
+                          <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(count, total)}</div>
+                        </td>
+                      );
+                    })}
+                    <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700 }}>
+                      {receptions.filter(r => r.serveType === s.key).length}
+                    </td>
+                  </tr>
+                ))}
+                <tr style={{ background: '#dbeafe', fontWeight: 700 }}>
+                  <td style={tdStyle}>Totale</td>
+                  {SERVE_ZONES.map(sz => (
+                    <td key={sz.zone} style={{ ...tdStyle, textAlign: 'center' }}>
+                      {receptions.filter(r => r.serveZone === sz.zone).length}
+                    </td>
+                  ))}
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>{receptions.length}</td>
                 </tr>
               </tbody>
             </table>
