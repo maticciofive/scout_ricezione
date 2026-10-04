@@ -115,12 +115,21 @@ export default function App() {
   const [highlightMode, setHighlightMode] = useState<'none' | 'green' | 'orange' | 'red'>('none');
   const [greenThreshold, setGreenThreshold] = useState<number>(() => loadJSON<number>('vb_green_threshold', 70));
   const [orangeThreshold, setOrangeThreshold] = useState<number>(() => loadJSON<number>('vb_orange_threshold', 40));
+  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleString('it-IT'));
 
   useEffect(() => { saveJSON('vb_players', players); }, [players]);
   useEffect(() => { saveJSON('vb_receptions', receptions); }, [receptions]);
   useEffect(() => { saveJSON('vb_count', playerCount); }, [playerCount]);
   useEffect(() => { saveJSON('vb_green_threshold', greenThreshold); }, [greenThreshold]);
   useEffect(() => { saveJSON('vb_orange_threshold', orangeThreshold); }, [orangeThreshold]);
+  
+  // Aggiorna l'orario ogni secondo
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleString('it-IT'));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const applyCount = () => {
     const c = Math.max(2, Math.min(6, tempCount));
@@ -598,6 +607,9 @@ export default function App() {
       <header style={{ background: '#1e40af', color: '#fff', padding: '16px', textAlign: 'center' }}>
         <h1 style={{ margin: 0, fontSize: 'clamp(1.25rem, 4vw, 1.5rem)' }}>🏐 Scouting Ricezione</h1>
         <p style={{ margin: '4px 0 0', opacity: 0.8, fontSize: 'clamp(0.75rem, 3vw, 0.875rem)' }}>Analisi della ricezione nella pallavolo</p>
+        <p style={{ margin: '8px 0 0', opacity: 0.9, fontSize: 'clamp(0.7rem, 2.5vw, 0.8rem)', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '6px', display: 'inline-block' }}>
+          📅 {currentTime}
+        </p>
       </header>
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(8px, 2vw, 16px)' }}>
