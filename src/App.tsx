@@ -135,12 +135,8 @@ export default function App() {
     setPlayers(prev => prev.map((p, i) => i === idx ? { ...p, zone } : p));
   };
 
-  const selectPlayer = (idx: number) => {
-    setSelectedPlayerIdx(idx);
-    setSelectedServeType(null);
-    setSelectedServeZone(null);
-    setSelectedFundamental(null);
-    setSelectedDir(null);
+  const selectServeZone = (serveZone: number) => {
+    setSelectedServeZone(serveZone);
     setStep(2);
   };
 
@@ -149,8 +145,8 @@ export default function App() {
     setStep(3);
   };
 
-  const selectServeZone = (serveZone: number) => {
-    setSelectedServeZone(serveZone);
+  const selectPlayer = (idx: number) => {
+    setSelectedPlayerIdx(idx);
     setStep(4);
   };
 
@@ -191,6 +187,10 @@ export default function App() {
 
   const undoLast = () => {
     setReceptions(prev => prev.slice(0, -1));
+  };
+
+  const deleteReception = (id: number) => {
+    setReceptions(prev => prev.filter(r => r.id !== id));
   };
 
   const resetAll = () => {
@@ -260,11 +260,11 @@ export default function App() {
   };
 
   const guideMsg = step === 1
-    ? '👆 Tocca un giocatore sul campo'
+    ? '📍 Scegli la zona di provenienza della battuta'
     : step === 2
       ? '🏐 Scegli il tipo di battuta'
       : step === 3
-        ? '📍 Scegli la zona di provenienza della battuta'
+        ? '👆 Tocca un giocatore sul campo'
         : step === 4
           ? '🤲 Scegli il fondamentale usato'
           : step === 5
@@ -326,6 +326,39 @@ export default function App() {
           )}
         </section>
 
+        {step === 1 && (
+          <section style={cardStyle}>
+            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Zona di Provenienza della Battuta</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
+              {SERVE_ZONES.map(sz => (
+                <button
+                  key={sz.zone}
+                  onClick={() => selectServeZone(sz.zone)}
+                  style={{
+                    width: 'clamp(90px, 25vw, 110px)',
+                    height: 'clamp(70px, 18vw, 85px)',
+                    borderRadius: '12px',
+                    background: selectedServeZone === sz.zone ? '#2563eb' : '#f3f4f6',
+                    color: selectedServeZone === sz.zone ? '#fff' : '#374151',
+                    border: selectedServeZone === sz.zone ? '3px solid #1d4ed8' : '2px solid #d1d5db',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: 'clamp(1.5rem, 6vw, 2rem)' }}>📍</span>
+                  <span style={{ fontSize: 'clamp(0.875rem, 3vw, 1rem)', marginTop: '4px' }}>{sz.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         {step === 2 && (
           <section style={cardStyle}>
             <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Tipo di Battuta</h3>
@@ -354,39 +387,6 @@ export default function App() {
                   <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>{s.emoji}</span>
                   <span style={{ fontSize: 'clamp(0.7rem, 2.5vw, 0.85rem)', marginTop: '2px', fontWeight: 700 }}>{s.key}</span>
                   <span style={{ fontSize: 'clamp(0.6rem, 2vw, 0.7rem)', marginTop: '2px' }}>{s.label}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {step === 3 && (
-          <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Zona di Provenienza della Battuta</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
-              {SERVE_ZONES.map(sz => (
-                <button
-                  key={sz.zone}
-                  onClick={() => selectServeZone(sz.zone)}
-                  style={{
-                    width: 'clamp(90px, 25vw, 110px)',
-                    height: 'clamp(70px, 18vw, 85px)',
-                    borderRadius: '12px',
-                    background: selectedServeZone === sz.zone ? '#2563eb' : '#f3f4f6',
-                    color: selectedServeZone === sz.zone ? '#fff' : '#374151',
-                    border: selectedServeZone === sz.zone ? '3px solid #1d4ed8' : '2px solid #d1d5db',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  <span style={{ fontSize: 'clamp(1.5rem, 6vw, 2rem)' }}>📍</span>
-                  <span style={{ fontSize: 'clamp(0.875rem, 3vw, 1rem)', marginTop: '4px' }}>{sz.label}</span>
                 </button>
               ))}
             </div>
@@ -569,6 +569,71 @@ export default function App() {
           </div>
           <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#6b7280' }}>Ricezioni registrate: <strong>{receptions.length}</strong></p>
         </section>
+
+        {receptions.length > 0 && (
+          <section style={cardStyle}>
+            <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>📋 Storico Ricezioni</h2>
+            <p style={{ margin: '0 0 12px', fontSize: '0.875rem', color: '#6b7280' }}>Clicca su "Annulla" per eliminare una ricezione specifica e reinserirla</p>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px', fontSize: '0.75rem' }}>
+                <thead>
+                  <tr>
+                    <th style={thStyle}>#</th>
+                    <th style={thStyle}>Zona Battuta</th>
+                    <th style={thStyle}>Tipo Battuta</th>
+                    <th style={thStyle}>Giocatore</th>
+                    <th style={thStyle}>Zona</th>
+                    <th style={thStyle}>Fondamentale</th>
+                    <th style={thStyle}>Direzione</th>
+                    <th style={thStyle}>Esito</th>
+                    <th style={thStyle}>Azione</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {receptions.slice().reverse().map((r, idx) => {
+                    const serveTypeInfo = SERVE_TYPES.find(s => s.key === r.serveType);
+                    const fundInfo = FUNDAMENTALS.find(f => f.key === r.fundamental);
+                    const dirInfo = DIRECTIONS.find(d => d.key === r.direction);
+                    const outInfo = OUTCOMES.find(o => o.key === r.outcome);
+                    return (
+                      <tr key={r.id} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                        <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700 }}>{receptions.length - idx}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>Z{r.serveZone}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>{serveTypeInfo?.emoji} {r.serveType}</td>
+                        <td style={tdStyle}>{r.playerName}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>Z{r.zone}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>{fundInfo?.emoji} {r.fundamental}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>{dirInfo?.symbol}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>
+                          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', background: outInfo?.bg, color: outInfo?.fg, fontWeight: 700 }}>
+                            {r.outcome}
+                          </span>
+                        </td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>
+                          <button
+                            onClick={() => deleteReception(r.id)}
+                            style={{
+                              padding: '4px 10px',
+                              background: '#ef4444',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Annulla
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
         <section style={cardStyle}>
           <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>Statistiche per Esito</h2>
