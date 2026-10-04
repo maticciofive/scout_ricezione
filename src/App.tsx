@@ -460,7 +460,7 @@ export default function App() {
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px', fontSize: '0.8rem' }}>
               <thead>
                 <tr>
-                  <th style={thStyle}>Giocatore</th>
+                  <th style={thStyle} rowSpan={2}>Giocatore</th>
                   <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Sinistra (4-7-5)</th>
                   <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Centro (3-8-6)</th>
                   <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Destra (2-9-1)</th>
