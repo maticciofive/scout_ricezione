@@ -155,32 +155,60 @@ export default function App() {
   };
 
   const selectServeZone = (serveZone: number) => {
+    if (step !== 1) {
+      alert('Devi prima selezionare la zona di provenienza della battuta');
+      return;
+    }
     setSelectedServeZone(serveZone);
     setStep(2);
   };
 
   const selectServeType = (serveType: string) => {
+    if (step !== 2 || selectedServeZone === null) {
+      alert('Devi prima selezionare la zona di provenienza della battuta');
+      return;
+    }
     setSelectedServeType(serveType);
     setStep(3);
   };
 
   const selectPlayer = (idx: number) => {
+    if (step !== 3 || selectedServeType === null || selectedServeZone === null) {
+      alert('Devi prima selezionare zona e tipo di battuta');
+      return;
+    }
     setSelectedPlayerIdx(idx);
     setStep(4);
   };
 
   const selectFundamental = (fundamental: string) => {
+    if (step !== 4 || selectedPlayerIdx === null) {
+      alert('Devi prima selezionare il giocatore che riceve');
+      return;
+    }
     setSelectedFundamental(fundamental);
     setStep(5);
   };
 
   const selectDirection = (dir: string) => {
+    if (step !== 5 || selectedFundamental === null) {
+      alert('Devi prima selezionare il fondamentale');
+      return;
+    }
     setSelectedDir(dir);
     setStep(6);
   };
 
   const selectOutcome = (outcome: string) => {
-    if (selectedPlayerIdx === null || selectedServeType === null || selectedServeZone === null || selectedFundamental === null || selectedDir === null) return;
+    if (step !== 6 || selectedDir === null) {
+      alert('Devi prima selezionare dove ha colpito la palla');
+      return;
+    }
+    if (selectedPlayerIdx === null || selectedServeType === null || selectedServeZone === null || selectedFundamental === null) {
+      alert('Errore: dati incompleti. Ricomincia dall\'inizio');
+      setStep(1);
+      return;
+    }
     setSelectedOutcome(outcome);
     setSelectedSpeed(null);
     setSpeedInput('');
@@ -590,18 +618,30 @@ export default function App() {
   };
 
   const guideMsg = step === 1
-    ? '📍 Scegli la zona di provenienza della battuta'
+    ? '📍 1/7 - Scegli la zona di provenienza della battuta'
     : step === 2
-      ? '🏐 Scegli il tipo di battuta'
+      ? '🏐 2/7 - Scegli il tipo di battuta'
       : step === 3
-        ? '👆 Tocca un giocatore sul campo'
+        ? '👆 3/7 - Tocca il giocatore che riceve'
         : step === 4
-          ? '🤲 Scegli il fondamentale usato'
+          ? '🤲 4/7 - Scegli il fondamentale usato'
           : step === 5
-            ? '🎯 Scegli dove ha colpito la palla rispetto al corpo'
+            ? '🎯 5/7 - Dove ha colpito la palla?'
             : step === 6
-              ? '✅ Scegli l\'esito della ricezione'
-              : '⚡ Inserisci la velocità della battuta (km/h) o lascia vuoto';
+              ? '✅ 6/7 - Scegli l\'esito della ricezione'
+              : '⚡ 7/7 - Velocità (opzionale)';
+
+  const goBack = () => {
+    if (step > 1) {
+      setStep((step - 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7);
+    }
+  };
+
+  const skipSpeed = () => {
+    if (step === 7) {
+      saveReception();
+    }
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -661,9 +701,40 @@ export default function App() {
           )}
         </section>
 
+        {/* Barra di Progresso */}
+        {step > 0 && step <= 7 && (
+          <section style={{ ...cardStyle, padding: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {[1, 2, 3, 4, 5, 6, 7].map(s => (
+                <div
+                  key={s}
+                  style={{
+                    width: 'clamp(30px, 8vw, 40px)',
+                    height: 'clamp(30px, 8vw, 40px)',
+                    borderRadius: '50%',
+                    background: s === step ? '#2563eb' : s < step ? '#22c55e' : '#e5e7eb',
+                    color: s <= step ? '#fff' : '#9ca3af',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {s < step ? '✓' : s}
+                </div>
+              ))}
+            </div>
+            <p style={{ textAlign: 'center', margin: '8px 0 0', fontSize: 'clamp(0.7rem, 2.5vw, 0.8rem)', color: '#6b7280' }}>
+              Step {step} di 7
+            </p>
+          </section>
+        )}
+
         {step === 1 && (
           <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Zona di Provenienza della Battuta</h3>
+            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>📍 Zona di Provenienza della Battuta</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
               {SERVE_ZONES.map(sz => (
                 <button
@@ -696,7 +767,25 @@ export default function App() {
 
         {step === 2 && (
           <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Tipo di Battuta</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <button
+                onClick={goBack}
+                style={{
+                  padding: '8px 16px',
+                  background: '#6b7280',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)',
+                }}
+              >
+                ← Indietro
+              </button>
+              <h3 style={{ margin: 0, color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>🏐 Tipo di Battuta</h3>
+              <div style={{ width: '80px' }} />
+            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
               {SERVE_TYPES.map(s => (
                 <button
@@ -729,7 +818,30 @@ export default function App() {
         )}
 
         <section style={cardStyle}>
-          <h2 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>Campo da Gioco</h2>
+          {step === 3 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <button
+                onClick={goBack}
+                style={{
+                  padding: '8px 16px',
+                  background: '#6b7280',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)',
+                }}
+              >
+                ← Indietro
+              </button>
+              <h2 style={{ margin: 0, color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>👆 Campo da Gioco</h2>
+              <div style={{ width: '80px' }} />
+            </div>
+          )}
+          {step !== 3 && (
+            <h2 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>Campo da Gioco</h2>
+          )}
           <div style={{ maxWidth: '380px', margin: '0 auto', width: '100%' }}>
             <div style={{ height: '10px', background: 'linear-gradient(90deg, #4b5563, #9ca3af, #4b5563)', borderRadius: '6px 6px 0 0' }} />
             <div style={{
@@ -765,7 +877,8 @@ export default function App() {
                       <span style={{ position: 'absolute', top: '2px', left: '4px', fontSize: 'clamp(8px, 2vw, 10px)', fontWeight: 700, color: 'rgba(120,53,15,0.5)' }}>{zone}</span>
                       {player ? (
                         <button
-                          onClick={() => selectPlayer(pIdx)}
+                          onClick={() => step === 3 ? selectPlayer(pIdx) : null}
+                          disabled={step !== 3}
                           style={{
                             width: 'clamp(44px, 15vw, 56px)',
                             height: 'clamp(44px, 15vw, 56px)',
@@ -773,7 +886,7 @@ export default function App() {
                             border: isSelected ? '3px solid #2563eb' : '2px solid #d1d5db',
                             background: isSelected ? '#2563eb' : '#fff',
                             color: isSelected ? '#fff' : '#1f2937',
-                            cursor: 'pointer',
+                            cursor: step === 3 ? 'pointer' : 'not-allowed',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
@@ -781,6 +894,7 @@ export default function App() {
                             boxShadow: isSelected ? '0 0 0 4px rgba(37,99,235,0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
                             transition: 'all 0.15s',
                             padding: '2px',
+                            opacity: step === 3 ? 1 : 0.6,
                           }}
                         >
                           <span style={{ fontSize: 'clamp(8px, 2.5vw, 10px)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'clamp(36px, 12vw, 48px)' }}>{player.name}</span>
@@ -802,7 +916,25 @@ export default function App() {
 
         {step === 4 && (
           <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Quale fondamentale hai usato?</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <button
+                onClick={goBack}
+                style={{
+                  padding: '8px 16px',
+                  background: '#6b7280',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)',
+                }}
+              >
+                ← Indietro
+              </button>
+              <h3 style={{ margin: 0, color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>🤲 Fondamentale</h3>
+              <div style={{ width: '80px' }} />
+            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
               {FUNDAMENTALS.map(f => (
                 <button
@@ -835,7 +967,25 @@ export default function App() {
 
         {step === 5 && (
           <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Dove ha colpito la palla?</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <button
+                onClick={goBack}
+                style={{
+                  padding: '8px 16px',
+                  background: '#6b7280',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)',
+                }}
+              >
+                ← Indietro
+              </button>
+              <h3 style={{ margin: 0, color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>🎯 Dove ha colpito?</h3>
+              <div style={{ width: '80px' }} />
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxWidth: '280px', margin: '0 auto' }}>
               <div />
               <button onClick={() => selectDirection('up')} style={dirBtnStyle(selectedDir === 'up')} title="Davanti al corpo">
@@ -867,7 +1017,25 @@ export default function App() {
 
         {step === 6 && (
           <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Esito della ricezione</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <button
+                onClick={goBack}
+                style={{
+                  padding: '8px 16px',
+                  background: '#6b7280',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)',
+                }}
+              >
+                ← Indietro
+              </button>
+              <h3 style={{ margin: 0, color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>✅ Esito</h3>
+              <div style={{ width: '80px' }} />
+            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
               {OUTCOMES.map(o => (
                 <button
@@ -900,9 +1068,41 @@ export default function App() {
 
         {step === 7 && (
           <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>⚡ Velocità della battuta (km/h)</h3>
-            <p style={{ textAlign: 'center', margin: '0 0 16px', fontSize: '0.875rem', color: '#6b7280' }}>
-              Inserisci la velocità se conosciuta, altrimenti lascia vuoto e premi Salva
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <button
+                onClick={goBack}
+                style={{
+                  padding: '8px 16px',
+                  background: '#6b7280',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)',
+                }}
+              >
+                ← Indietro
+              </button>
+              <h3 style={{ margin: 0, color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>⚡ Velocità</h3>
+              <button
+                onClick={skipSpeed}
+                style={{
+                  padding: '8px 16px',
+                  background: '#f59e0b',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)',
+                }}
+              >
+                Salta →
+              </button>
+            </div>
+            <p style={{ textAlign: 'center', margin: '0 0 16px', fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', color: '#6b7280' }}>
+              Inserisci la velocità se conosciuta, altrimenti premi "Salva" o "Salta"
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
               <input
@@ -913,9 +1113,9 @@ export default function App() {
                 value={speedInput}
                 onChange={(e) => setSpeedInput(e.target.value)}
                 style={{
-                  width: '200px',
+                  width: 'clamp(150px, 40vw, 200px)',
                   padding: '12px',
-                  fontSize: '1.25rem',
+                  fontSize: 'clamp(1rem, 4vw, 1.25rem)',
                   border: '2px solid #d1d5db',
                   borderRadius: '8px',
                   textAlign: 'center',
@@ -928,18 +1128,18 @@ export default function App() {
                     saveReception();
                   }}
                   style={{
-                    padding: '12px 24px',
+                    padding: 'clamp(10px, 3vw, 12px) clamp(20px, 5vw, 24px)',
                     background: '#22c55e',
                     color: '#fff',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     fontWeight: 700,
-                    fontSize: '1rem',
+                    fontSize: 'clamp(0.9rem, 3vw, 1rem)',
                     boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                   }}
                 >
-                  ✓ Salva Ricezione
+                  ✓ Salva
                 </button>
                 <button
                   onClick={() => {
@@ -947,17 +1147,43 @@ export default function App() {
                     setSelectedSpeed(null);
                   }}
                   style={{
-                    padding: '12px 24px',
+                    padding: 'clamp(10px, 3vw, 12px) clamp(20px, 5vw, 24px)',
                     background: '#9ca3af',
                     color: '#fff',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     fontWeight: 600,
-                    fontSize: '1rem',
+                    fontSize: 'clamp(0.9rem, 3vw, 1rem)',
                   }}
                 >
                   ↺ Svuota
+                </button>
+                <button
+                  onClick={() => {
+                    // Reset completo dell'inserimento
+                    setSelectedPlayerIdx(null);
+                    setSelectedServeType(null);
+                    setSelectedServeZone(null);
+                    setSelectedFundamental(null);
+                    setSelectedDir(null);
+                    setSelectedOutcome(null);
+                    setSelectedSpeed(null);
+                    setSpeedInput('');
+                    setStep(1);
+                  }}
+                  style={{
+                    padding: 'clamp(10px, 3vw, 12px) clamp(20px, 5vw, 24px)',
+                    background: '#dc2626',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: 'clamp(0.9rem, 3vw, 1rem)',
+                  }}
+                >
+                  ✗ Annulla
                 </button>
               </div>
             </div>
