@@ -471,7 +471,9 @@ function analizzaCaratteristichePositivita(
   });
   const zonaPiuFrequente = Object.entries(zonaCount).sort((a, b) => b[1] - a[1])[0];
   if (zonaPiuFrequente) {
-    caratteristiche.push(`verso il ${zonaPiuFrequente[0].toLowerCase()}`);
+    // Corregge l'articolo in base al genere della zona
+    const articolo = zonaPiuFrequente[0].toLowerCase() === 'centro' ? 'il' : 'la';
+    caratteristiche.push(`verso ${articolo} ${zonaPiuFrequente[0].toLowerCase()}`);
   }
   
   return caratteristiche.join(' ');
@@ -521,7 +523,9 @@ function analizzaCaratteristicheNegativita(colpi: Colpo[]): string {
   });
   const zonaPiuFrequente = Object.entries(zonaCount).sort((a, b) => b[1] - a[1])[0];
   if (zonaPiuFrequente) {
-    caratteristiche.push(`verso il ${zonaPiuFrequente[0].toLowerCase()}`);
+    // Corregge l'articolo in base al genere della zona
+    const articolo = zonaPiuFrequente[0].toLowerCase() === 'centro' ? 'il' : 'la';
+    caratteristiche.push(`verso ${articolo} ${zonaPiuFrequente[0].toLowerCase()}`);
   }
   
   return caratteristiche.join(' ');
@@ -606,6 +610,33 @@ function trovaCombinazionePeggiore(colpi: Colpo[]): string | null {
   return combinazioni.reduce((min, c) => c.pp < min.pp ? c : min, combinazioni[0]).nome;
 }
 
+// Funzioni helper per etichette descrittive
+function getDirezioneLabel(direzione: string): string {
+  const direzioni: Record<string, string> = {
+    'up': 'avanti',
+    'down': 'dietro',
+    'left': 'lato sinistro',
+    'right': 'lato destro',
+    'center': 'al corpo',
+    'Davanti al corpo': 'avanti',
+    'A sinistra del corpo': 'lato sinistro',
+    'Al corpo': 'al corpo',
+    'A destra del corpo': 'lato destro',
+    'Dietro al corpo': 'dietro',
+  };
+  return direzioni[direzione] || direzione;
+}
+
+function getProvenienzaLabel(provenienza: string): string {
+  if (provenienza.startsWith('Zona ')) {
+    return `da ${provenienza.toLowerCase()}`;
+  }
+  if (provenienza.match(/^\d+$/)) {
+    return `da zona ${provenienza}`;
+  }
+  return provenienza;
+}
+
 function generaSintesi(
   nome: string,
   metriche: { pp: number; er: number; pe: number; pn: number },
@@ -675,7 +706,7 @@ function generaSintesi(
     
     // Aggiungi dettagli specifici sulla provenienza
     if (puntiDeboli.provenienzaCritica) {
-      sintesi += `Focus sulla battuta dalla zona ${puntiDeboli.provenienzaCritica}.`;
+      sintesi += `Focus sulla battuta ${getProvenienzaLabel(puntiDeboli.provenienzaCritica)}.`;
     } else if (puntiDeboli.velocitaCritica) {
       sintesi += `Focus sulle battute ${puntiDeboli.velocitaCritica.toLowerCase()}.`;
     }

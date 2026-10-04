@@ -5,6 +5,33 @@ import { emojiPerClassifica, colorePerClassifica, getLatoDaZona } from '../utils
 import { esportaResoconto } from '../utils/exportResoconto';
 import './ResocontoAnalisi.css';
 
+// Funzioni helper per etichette descrittive
+function getDirezioneLabel(direzione: string): string {
+  const direzioni: Record<string, string> = {
+    'up': 'avanti',
+    'down': 'dietro',
+    'left': 'lato sinistro',
+    'right': 'lato destro',
+    'center': 'al corpo',
+    'Davanti al corpo': 'avanti',
+    'A sinistra del corpo': 'lato sinistro',
+    'Al corpo': 'al corpo',
+    'A destra del corpo': 'lato destro',
+    'Dietro al corpo': 'dietro',
+  };
+  return direzioni[direzione] || direzione;
+}
+
+function getProvenienzaLabel(provenienza: string): string {
+  if (provenienza.startsWith('Zona ')) {
+    return `da ${provenienza.toLowerCase()}`;
+  }
+  if (provenienza.match(/^\d+$/)) {
+    return `da zona ${provenienza}`;
+  }
+  return provenienza;
+}
+
 interface Colpo {
   playerIndex: number;
   outcome: string;
@@ -222,6 +249,9 @@ export default function ResocontoAnalisi({ giocatori, colpi }: ResocontoAnalisiP
                           <li>
                             {/* FIX DISTINZIONE ESITI: Mostra separatamente Errori (=) e Negative (-) */}
                             Esito negativo prevalente: <strong>{analisi.puntiDeboli.esitoNegativoPrevalente}</strong>
+                            {analisi.puntiDeboli.direzioneCritica && (
+                              <span> - direzione: {getDirezioneLabel(analisi.puntiDeboli.direzioneCritica)}</span>
+                            )}
                           </li>
                         )}
                         {analisi.puntiDeboli.zonaCritica && (
@@ -236,8 +266,12 @@ export default function ResocontoAnalisi({ giocatori, colpi }: ResocontoAnalisiP
                             ⚠️ Zona {analisi.puntiDeboli.zonaCritica}: lavorare sul lato <strong>{getLatoDaZona(analisi.puntiDeboli.zonaCritica)}</strong>
                           </li>
                         )}
-                        {analisi.puntiDeboli.direzioneCritica && <li>Direzione critica: {analisi.puntiDeboli.direzioneCritica}</li>}
-                        {analisi.puntiDeboli.provenienzaCritica && <li>Provenienza critica: {analisi.puntiDeboli.provenienzaCritica}</li>}
+                        {analisi.puntiDeboli.direzioneCritica && (
+                          <li>Direzione critica: <strong>{analisi.puntiDeboli.direzioneCritica}</strong> ({getDirezioneLabel(analisi.puntiDeboli.direzioneCritica)})</li>
+                        )}
+                        {analisi.puntiDeboli.provenienzaCritica && (
+                          <li>Provenienza critica: <strong>{getProvenienzaLabel(analisi.puntiDeboli.provenienzaCritica)}</strong></li>
+                        )}
                         {analisi.puntiDeboli.velocitaCritica && <li>Velocità critica: {analisi.puntiDeboli.velocitaCritica}</li>}
                         {analisi.puntiDeboli.tipologiaCritica && <li>Tipologia critica: {analisi.puntiDeboli.tipologiaCritica}</li>}
                         {analisi.puntiDeboli.combinazionePeggiore && <li>Combinazione critica: {analisi.puntiDeboli.combinazionePeggiore}</li>}
