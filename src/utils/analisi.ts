@@ -675,7 +675,7 @@ function generaSintesi(
     
     // Aggiungi dettagli specifici sulla provenienza
     if (puntiDeboli.provenienzaCritica) {
-      sintesi += `Focus sulla battuta dalla ${puntiDeboli.provenienzaCritica}.`;
+      sintesi += `Focus sulla battuta dalla zona ${puntiDeboli.provenienzaCritica}.`;
     } else if (puntiDeboli.velocitaCritica) {
       sintesi += `Focus sulle battute ${puntiDeboli.velocitaCritica.toLowerCase()}.`;
     }
