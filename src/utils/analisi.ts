@@ -199,8 +199,8 @@ export function generaAnalisiCompleta(
     };
   });
 
-  // FIX LOGICA MUTUA ESCLUSIONE: Calcola PRIMA i punti deboli, POI i punti di forza
-  // escludendo le zone/direzioni/provenienze già identificate come critiche
+  // FIX LOGICA MUTUA ESCLUSIONE COMPLETA: Calcola PRIMA i punti deboli, POI i punti di forza
+  // escludendo TUTTE le dimensioni già identificate come critiche
   
   // Punti deboli - dove ci sono molti esiti NEGATIVI (=, -)
   const puntiDeboli = {
@@ -214,22 +214,24 @@ export function generaAnalisiCompleta(
     caratteristicheNegativita: analizzaCaratteristicheNegativita(colpiGiocatore),
   };
 
-  // FIX LOGICA MUTUA ESCLUSIONE: Escludi le zone critiche dai punti di forza
+  // FIX LOGICA MUTUA ESCLUSIONE COMPLETA: Costruisci liste di esclusione per OGNI dimensione
   const zoneDaEscludere = puntiDeboli.zonaCritica ? [puntiDeboli.zonaCritica] : [];
   const direzioniDaEscludere = puntiDeboli.direzioneCritica ? [puntiDeboli.direzioneCritica] : [];
   const provenienzeDaEscludere = puntiDeboli.provenienzaCritica ? [puntiDeboli.provenienzaCritica] : [];
+  const velocitaDaEscludere = puntiDeboli.velocitaCritica ? [puntiDeboli.velocitaCritica] : [];
+  const tipologieDaEscludere = puntiDeboli.tipologiaCritica ? [puntiDeboli.tipologiaCritica] : [];
 
   // Punti di forza - dove ci sono molti esiti POSITIVI (#, +)
-  // FIX: Esclude le zone/direzioni/provenienze già identificate come critiche
+  // FIX: Esclude TUTTE le dimensioni già identificate come critiche
   const puntiDiForza = {
     migliorEsito: trovaMigliore(perEsito)?.nome || null,
     migliorZona: trovaCondizioneConPiuPositivi(colpiGiocatore, 'side', zoneDaEscludere),
     migliorDirezione: trovaCondizioneConPiuPositivi(colpiGiocatore, 'direction', direzioniDaEscludere),
     migliorProvenienza: trovaCondizioneConPiuPositivi(colpiGiocatore, 'serveZone', provenienzeDaEscludere),
-    migliorVelocita: trovaCondizioneConPiuPositivi(colpiGiocatore, 'speedCategory'),
-    migliorTipologia: trovaCondizioneConPiuPositivi(colpiGiocatore, 'serveTypology'),
+    migliorVelocita: trovaCondizioneConPiuPositivi(colpiGiocatore, 'speedCategory', velocitaDaEscludere),
+    migliorTipologia: trovaCondizioneConPiuPositivi(colpiGiocatore, 'serveTypology', tipologieDaEscludere),
     combinazioneMigliore: trovaCombinazioneConPiuPositivi(colpiGiocatore),
-    caratteristichePositivita: analizzaCaratteristichePositivita(colpiGiocatore),
+    caratteristichePositivita: analizzaCaratteristichePositivita(colpiGiocatore, zoneDaEscludere, direzioniDaEscludere, provenienzeDaEscludere),
   };
 
   // Sintesi
@@ -423,14 +425,20 @@ function trovaCombinazioneConPiuNegativi(colpi: Colpo[]): string | null {
 
 /**
  * Analizza le caratteristiche delle positività
+ * FIX MUTUA ESCLUSIONE COMPLETA: Accetta parametri di esclusione per evitare contraddizioni
  */
-function analizzaCaratteristichePositivita(colpi: Colpo[]): string {
+function analizzaCaratteristichePositivita(
+  colpi: Colpo[],
+  zoneDaEscludere: string[] = [],
+  direzioniDaEscludere: string[] = [],
+  provenienzeDaEscludere: string[] = []
+): string {
   const positivi = colpi.filter(c => c.outcome === '#' || c.outcome === '+');
   if (positivi.length === 0) return '';
   
   const caratteristiche: string[] = [];
   
-  // Velocità più frequente nei positivi
+  // Velocità più frequente nei positivi (escludendo velocità critiche)
   const velocitaCount: Record<string, number> = {};
   positivi.forEach(c => {
     if (c.speedCategory && c.speedCategory !== 'non-specificata') {
@@ -442,10 +450,10 @@ function analizzaCaratteristichePositivita(colpi: Colpo[]): string {
     caratteristiche.push(`battute ${velocitaPiuFrequente[0].toLowerCase()}`);
   }
   
-  // Provenienza più frequente nei positivi
+  // Provenienza più frequente nei positivi (escludendo provenienze critiche)
   const provCount: Record<number, number> = {};
   positivi.forEach(c => {
-    if (c.serveZone) {
+    if (c.serveZone && !provenienzeDaEscludere.includes(`Zona ${c.serveZone}`)) {
       provCount[c.serveZone] = (provCount[c.serveZone] || 0) + 1;
     }
   });
@@ -454,10 +462,10 @@ function analizzaCaratteristichePositivita(colpi: Colpo[]): string {
     caratteristiche.push(`dalla zona ${provPiuFrequente[0]}`);
   }
   
-  // Zona di campo più frequente nei positivi
+  // Zona di campo più frequente nei positivi (escludendo zone critiche)
   const zonaCount: Record<string, number> = {};
   positivi.forEach(c => {
-    if (c.side) {
+    if (c.side && !zoneDaEscludere.includes(c.side)) {
       zonaCount[c.side] = (zonaCount[c.side] || 0) + 1;
     }
   });
