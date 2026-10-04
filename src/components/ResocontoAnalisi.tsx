@@ -181,27 +181,37 @@ export default function ResocontoAnalisi({ giocatori, colpi }: ResocontoAnalisiP
                   {/* Punti di forza e debolezze */}
                   <div className="resoconto-grid-due-colonne">
                     <div className="resoconto-colonna-forza">
-                      <h4>✅ Punti di Forza</h4>
+                      <h4>✅ Punti di Forza (Evidenze Positive)</h4>
                       <ul>
+                        {analisi.puntiDiForza.caratteristichePositivita && (
+                          <li className="resoconto-evidenza-positiva">
+                            <strong>Caratteristiche positività:</strong> {analisi.puntiDiForza.caratteristichePositivita}
+                          </li>
+                        )}
                         {analisi.puntiDiForza.migliorEsito && <li>Miglior esito: {analisi.puntiDiForza.migliorEsito}</li>}
-                        {analisi.puntiDiForza.migliorZona && <li>Miglior zona: {analisi.puntiDiForza.migliorZona}</li>}
-                        {analisi.puntiDiForza.migliorDirezione && <li>Miglior direzione: {analisi.puntiDiForza.migliorDirezione}</li>}
-                        {analisi.puntiDiForza.migliorProvenienza && <li>Miglior provenienza: {analisi.puntiDiForza.migliorProvenienza}</li>}
-                        {analisi.puntiDiForza.migliorVelocita && <li>Miglior velocità: {analisi.puntiDiForza.migliorVelocita}</li>}
-                        {analisi.puntiDiForza.migliorTipologia && <li>Miglior tipologia: {analisi.puntiDiForza.migliorTipologia}</li>}
-                        {analisi.puntiDiForza.combinazioneMigliore && <li>Combinazione migliore: {analisi.puntiDiForza.combinazioneMigliore}</li>}
+                        {analisi.puntiDiForza.migliorZona && <li>Zona con più positività: {analisi.puntiDiForza.migliorZona}</li>}
+                        {analisi.puntiDiForza.migliorDirezione && <li>Direzione con più positività: {analisi.puntiDiForza.migliorDirezione}</li>}
+                        {analisi.puntiDiForza.migliorProvenienza && <li>Provenienza con più positività: {analisi.puntiDiForza.migliorProvenienza}</li>}
+                        {analisi.puntiDiForza.migliorVelocita && <li>Velocità con più positività: {analisi.puntiDiForza.migliorVelocita}</li>}
+                        {analisi.puntiDiForza.migliorTipologia && <li>Tipologia con più positività: {analisi.puntiDiForza.migliorTipologia}</li>}
+                        {analisi.puntiDiForza.combinazioneMigliore && <li>Combinazione con più positività: {analisi.puntiDiForza.combinazioneMigliore}</li>}
                       </ul>
                     </div>
                     <div className="resoconto-colonna-debolezza">
-                      <h4>⚠️ Su cui Lavorare</h4>
+                      <h4>⚠️ Criticità (Evidenze Negative)</h4>
                       <ul>
+                        {analisi.puntiDeboli.caratteristicheNegativita && (
+                          <li className="resoconto-evidenza-negativa">
+                            <strong>Caratteristiche negatività:</strong> {analisi.puntiDeboli.caratteristicheNegativita}
+                          </li>
+                        )}
                         {analisi.puntiDeboli.esitoNegativoPrevalente && <li>Esito negativo prevalente: {analisi.puntiDeboli.esitoNegativoPrevalente}</li>}
-                        {analisi.puntiDeboli.zonaCritica && <li>Zona critica: {analisi.puntiDeboli.zonaCritica}</li>}
-                        {analisi.puntiDeboli.direzioneCritica && <li>Direzione critica: {analisi.puntiDeboli.direzioneCritica}</li>}
-                        {analisi.puntiDeboli.provenienzaCritica && <li>Provenienza critica: {analisi.puntiDeboli.provenienzaCritica}</li>}
-                        {analisi.puntiDeboli.velocitaCritica && <li>Velocità critica: {analisi.puntiDeboli.velocitaCritica}</li>}
-                        {analisi.puntiDeboli.tipologiaCritica && <li>Tipologia critica: {analisi.puntiDeboli.tipologiaCritica}</li>}
-                        {analisi.puntiDeboli.combinazionePeggiore && <li>Combinazione peggiore: {analisi.puntiDeboli.combinazionePeggiore}</li>}
+                        {analisi.puntiDeboli.zonaCritica && <li>Zona con più negatività: {analisi.puntiDeboli.zonaCritica}</li>}
+                        {analisi.puntiDeboli.direzioneCritica && <li>Direzione con più negatività: {analisi.puntiDeboli.direzioneCritica}</li>}
+                        {analisi.puntiDeboli.provenienzaCritica && <li>Provenienza con più negatività: {analisi.puntiDeboli.provenienzaCritica}</li>}
+                        {analisi.puntiDeboli.velocitaCritica && <li>Velocità con più negatività: {analisi.puntiDeboli.velocitaCritica}</li>}
+                        {analisi.puntiDeboli.tipologiaCritica && <li>Tipologia con più negatività: {analisi.puntiDeboli.tipologiaCritica}</li>}
+                        {analisi.puntiDeboli.combinazionePeggiore && <li>Combinazione con più negatività: {analisi.puntiDeboli.combinazionePeggiore}</li>}
                       </ul>
                     </div>
                   </div>

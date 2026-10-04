@@ -233,6 +233,24 @@
   font-size: 0.875rem;
 }
 
+.resoconto-evidenza-positiva,
+.resoconto-evidenza-negativa {
+  padding: 8px;
+  border-radius: 6px;
+  margin: 8px 0;
+  font-weight: 600;
+}
+
+.resoconto-evidenza-positiva {
+  background: #bbf7d0;
+  color: #166534;
+}
+
+.resoconto-evidenza-negativa {
+  background: #fecaca;
+  color: #991b1b;
+}
+
 .resoconto-sintesi {
   padding: 16px;
   background: #dbeafe;

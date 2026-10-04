@@ -82,27 +82,33 @@ export function esportaResoconto(analisiList: AnalisiGiocatore[]): void {
     }
     
     // Punti di forza
-    contenuto += '✅ PUNTI DI FORZA\n';
+    contenuto += '✅ PUNTI DI FORZA (EVIDENZE POSITIVE)\n';
     contenuto += '─'.repeat(70) + '\n';
+    if (analisi.puntiDiForza.caratteristichePositivita) {
+      contenuto += `   ✅ Caratteristiche positività: ${analisi.puntiDiForza.caratteristichePositivita}\n`;
+    }
     if (analisi.puntiDiForza.migliorEsito) contenuto += `   ✅ Miglior esito: ${analisi.puntiDiForza.migliorEsito}\n`;
-    if (analisi.puntiDiForza.migliorZona) contenuto += `   ✅ Miglior zona: ${analisi.puntiDiForza.migliorZona}\n`;
-    if (analisi.puntiDiForza.migliorDirezione) contenuto += `   ✅ Miglior direzione: ${analisi.puntiDiForza.migliorDirezione}\n`;
-    if (analisi.puntiDiForza.migliorProvenienza) contenuto += `   ✅ Miglior provenienza: ${analisi.puntiDiForza.migliorProvenienza}\n`;
-    if (analisi.puntiDiForza.migliorVelocita) contenuto += `   ✅ Miglior velocità: ${analisi.puntiDiForza.migliorVelocita}\n`;
-    if (analisi.puntiDiForza.migliorTipologia) contenuto += `   ✅ Miglior tipologia: ${analisi.puntiDiForza.migliorTipologia}\n`;
-    if (analisi.puntiDiForza.combinazioneMigliore) contenuto += `   ✅ Combinazione migliore: ${analisi.puntiDiForza.combinazioneMigliore}\n`;
+    if (analisi.puntiDiForza.migliorZona) contenuto += `   ✅ Zona con più positività: ${analisi.puntiDiForza.migliorZona}\n`;
+    if (analisi.puntiDiForza.migliorDirezione) contenuto += `   ✅ Direzione con più positività: ${analisi.puntiDiForza.migliorDirezione}\n`;
+    if (analisi.puntiDiForza.migliorProvenienza) contenuto += `   ✅ Provenienza con più positività: ${analisi.puntiDiForza.migliorProvenienza}\n`;
+    if (analisi.puntiDiForza.migliorVelocita) contenuto += `   ✅ Velocità con più positività: ${analisi.puntiDiForza.migliorVelocita}\n`;
+    if (analisi.puntiDiForza.migliorTipologia) contenuto += `   ✅ Tipologia con più positività: ${analisi.puntiDiForza.migliorTipologia}\n`;
+    if (analisi.puntiDiForza.combinazioneMigliore) contenuto += `   ✅ Combinazione con più positività: ${analisi.puntiDiForza.combinazioneMigliore}\n`;
     contenuto += '\n';
     
     // Punti deboli
-    contenuto += '⚠️ SU CUI LAVORARE\n';
+    contenuto += '⚠️ CRITICITÀ (EVIDENZE NEGATIVE)\n';
     contenuto += '─'.repeat(70) + '\n';
+    if (analisi.puntiDeboli.caratteristicheNegativita) {
+      contenuto += `   ⚠️ Caratteristiche negatività: ${analisi.puntiDeboli.caratteristicheNegativita}\n`;
+    }
     if (analisi.puntiDeboli.esitoNegativoPrevalente) contenuto += `   ⚠️ Esito negativo prevalente: ${analisi.puntiDeboli.esitoNegativoPrevalente}\n`;
-    if (analisi.puntiDeboli.zonaCritica) contenuto += `   ⚠️ Zona critica: ${analisi.puntiDeboli.zonaCritica}\n`;
-    if (analisi.puntiDeboli.direzioneCritica) contenuto += `   ⚠️ Direzione critica: ${analisi.puntiDeboli.direzioneCritica}\n`;
-    if (analisi.puntiDeboli.provenienzaCritica) contenuto += `   ⚠️ Provenienza critica: ${analisi.puntiDeboli.provenienzaCritica}\n`;
-    if (analisi.puntiDeboli.velocitaCritica) contenuto += `   ⚠️ Velocità critica: ${analisi.puntiDeboli.velocitaCritica}\n`;
-    if (analisi.puntiDeboli.tipologiaCritica) contenuto += `   ⚠️ Tipologia critica: ${analisi.puntiDeboli.tipologiaCritica}\n`;
-    if (analisi.puntiDeboli.combinazionePeggiore) contenuto += `   ⚠️ Combinazione peggiore: ${analisi.puntiDeboli.combinazionePeggiore}\n`;
+    if (analisi.puntiDeboli.zonaCritica) contenuto += `   ⚠️ Zona con più negatività: ${analisi.puntiDeboli.zonaCritica}\n`;
+    if (analisi.puntiDeboli.direzioneCritica) contenuto += `   ⚠️ Direzione con più negatività: ${analisi.puntiDeboli.direzioneCritica}\n`;
+    if (analisi.puntiDeboli.provenienzaCritica) contenuto += `   ⚠️ Provenienza con più negatività: ${analisi.puntiDeboli.provenienzaCritica}\n`;
+    if (analisi.puntiDeboli.velocitaCritica) contenuto += `   ⚠️ Velocità con più negatività: ${analisi.puntiDeboli.velocitaCritica}\n`;
+    if (analisi.puntiDeboli.tipologiaCritica) contenuto += `   ⚠️ Tipologia con più negatività: ${analisi.puntiDeboli.tipologiaCritica}\n`;
+    if (analisi.puntiDeboli.combinazionePeggiore) contenuto += `   ⚠️ Combinazione con più negatività: ${analisi.puntiDeboli.combinazionePeggiore}\n`;
     contenuto += '\n';
     
     // Sintesi
