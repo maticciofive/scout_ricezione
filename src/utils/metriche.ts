@@ -172,3 +172,43 @@ export function getLatoOpposto(lato: string): string {
   if (lato === 'sinistro') return 'destro';
   return 'centrale';
 }
+
+/**
+ * Calcola la direzione relativa della battuta rispetto al giocatore
+ * Prospettiva: dal punto di vista del RICEVITORE che guarda verso la rete
+ * 
+ * Mappatura corretta:
+ * - Giocatore in Zona Sinistra: parallela da Zona 1, diagonale da Zona 5 e 6
+ * - Giocatore in Zona Centro: parallela da Zona 6, diagonale da Zona 1 e 5
+ * - Giocatore in Zona Destra: parallela da Zona 5, diagonale da Zona 1 e 6
+ * 
+ * @param zonaGiocatore - Zona dove si trova il giocatore (Sinistra/Centro/Destra)
+ * @param zonaBattuta - Zona da cui arriva la battuta (1/5/6)
+ * @returns Descrizione della direzione relativa
+ */
+export function calcolaDirezioneRelativa(zonaGiocatore: string, zonaBattuta: number): string {
+  const zonaLower = zonaGiocatore.toLowerCase();
+  
+  // Giocatore in Zona Sinistra (4, 7, 5)
+  if (zonaLower.includes('sinistra')) {
+    if (zonaBattuta === 1) return 'parallela'; // Zona 1 è di fronte alla sinistra
+    if (zonaBattuta === 5) return 'dalla sua destra (diagonale)'; // Zona 5 arriva in diagonale da destra
+    if (zonaBattuta === 6) return 'dalla sua destra (diagonale)'; // Zona 6 arriva in diagonale da destra
+  }
+  
+  // Giocatore in Zona Centro (3, 8, 6)
+  if (zonaLower.includes('centro')) {
+    if (zonaBattuta === 1) return 'dalla sua sinistra (diagonale)'; // Zona 1 arriva in diagonale da sinistra
+    if (zonaBattuta === 5) return 'dalla sua destra (diagonale)'; // Zona 5 arriva in diagonale da destra
+    if (zonaBattuta === 6) return 'parallela (frontale)'; // Zona 6 è di fronte al centro
+  }
+  
+  // Giocatore in Zona Destra (2, 9, 1)
+  if (zonaLower.includes('destra')) {
+    if (zonaBattuta === 1) return 'dalla sua sinistra (diagonale)'; // Zona 1 arriva in diagonale da sinistra
+    if (zonaBattuta === 5) return 'parallela'; // Zona 5 è di fronte alla destra
+    if (zonaBattuta === 6) return 'dalla sua sinistra (diagonale)'; // Zona 6 arriva in diagonale da sinistra
+  }
+  
+  return 'direzione non specificata';
+}
