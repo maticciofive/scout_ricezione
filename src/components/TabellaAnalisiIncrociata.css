@@ -13,40 +13,94 @@
   margin-bottom: 20px;
 }
 
-@media (min-width: 768px) {
-  .tabella-incrociata-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-}
-
 .tabella-incrociata-titolo {
   margin: 0;
   color: #1e40af;
   font-size: clamp(1.3rem, 4vw, 1.8rem);
 }
 
-.tabella-incrociata-filtro {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* Sezione Filtri */
+.filtri-container {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
 }
 
-.tabella-incrociata-filtro label {
+.filtri-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.filtro-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filtro-item label {
   font-weight: 600;
   color: #374151;
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  font-size: 0.9rem;
 }
 
-.tabella-incrociata-select {
-  padding: 8px 16px;
+.filtro-select {
+  padding: 8px 12px;
   border: 2px solid #d1d5db;
-  border-radius: 8px;
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  border-radius: 6px;
+  font-size: 0.9rem;
   background: white;
   cursor: pointer;
   transition: border-color 0.2s;
+}
+
+.filtro-select:hover {
+  border-color: #3b82f6;
+}
+
+.filtro-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.reset-btn {
+  padding: 10px 20px;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.reset-btn:hover {
+  background: #4b5563;
+}
+
+.risultati-info {
+  background: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  padding: 12px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+}
+
+.risultati-info p {
+  margin: 0;
+  color: #1e40af;
+  font-size: 0.95rem;
+}
+
+.nessun-dato {
+  text-align: center;
+  padding: 40px 20px !important;
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 1rem;
 }
 
 .tabella-incrociata-select:hover {
