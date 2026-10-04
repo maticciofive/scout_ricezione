@@ -207,20 +207,20 @@ export default function App() {
       : '✅ Scegli l\'esito della ricezione';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: 'system-ui, sans-serif' }}>
-      <header style={{ background: '#1e40af', color: '#fff', padding: '16px', textAlign: 'center' }}>
-        <h1 style={{ margin: 0, fontSize: '1.5rem' }}>🏐 Scouting Ricezione</h1>
-        <p style={{ margin: '4px 0 0', opacity: 0.8, fontSize: '0.875rem' }}>Analisi della ricezione nella pallavolo</p>
+    <div style={{ minHeight: '100vh', background: '#f0f4f8' }}>
+      <header className="header">
+        <h1>🏐 Scouting Ricezione</h1>
+        <p>Analisi della ricezione nella pallavolo</p>
       </header>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '16px' }}>
-        <section style={cardStyle}>
+      <div className="container">
+        <section className="card">
           <button
             onClick={() => setShowConfig(!showConfig)}
-            style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 600, color: '#374151', padding: 0 }}
+            className="config-toggle"
           >
             <span>⚙️ Configurazione Giocatori</span>
-            <span style={{ fontSize: '1.5rem' }}>{showConfig ? '−' : '+'}</span>
+            <span className="config-toggle-icon">{showConfig ? '−' : '+'}</span>
           </button>
 
           {showConfig && (
@@ -235,23 +235,23 @@ export default function App() {
                   onChange={e => setTempCount(parseInt(e.target.value) || 2)}
                   style={{ width: '60px', padding: '8px', border: '2px solid #d1d5db', borderRadius: '8px', textAlign: 'center', fontSize: '1rem', fontWeight: 700 }}
                 />
-                <button onClick={applyCount} style={btnStyle('#2563eb')}>Applica</button>
+                <button onClick={applyCount} className="btn" style={{ background: '#2563eb' }}>Applica</button>
               </div>
 
               {players.map((p, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', background: '#f9fafb', borderRadius: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ width: '24px', fontWeight: 600, color: '#6b7280' }}>{idx + 1}.</span>
+                <div key={idx} className="player-config-item">
+                  <span className="player-config-number">{idx + 1}.</span>
                   <input
                     type="text"
                     value={p.name}
                     onChange={e => updateName(idx, e.target.value)}
-                    style={{ flex: 1, minWidth: '120px', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                    className="player-config-input"
                   />
-                  <label style={{ fontSize: '0.875rem', color: '#6b7280' }}>Zona:</label>
+                  <label className="player-config-label">Zona:</label>
                   <select
                     value={p.zone}
                     onChange={e => updateZone(idx, parseInt(e.target.value))}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                    className="player-config-select"
                   >
                     {ALL_ZONES.map(z => <option key={z} value={z}>Zona {z}</option>)}
                   </select>
@@ -261,18 +261,12 @@ export default function App() {
           )}
         </section>
 
-        <section style={cardStyle}>
-          <h2 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151' }}>Campo da Gioco</h2>
-          <div style={{ maxWidth: '380px', margin: '0 auto' }}>
-            <div style={{ height: '10px', background: 'linear-gradient(90deg, #4b5563, #9ca3af, #4b5563)', borderRadius: '6px 6px 0 0' }} />
-            <div style={{
-              background: 'linear-gradient(180deg, #fef3c7, #fde68a)',
-              border: '4px solid #b45309',
-              borderRadius: '0 0 8px 8px',
-              padding: '8px',
-              position: 'relative',
-            }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)', gap: '4px', aspectRatio: '3/2.5' }}>
+        <section className="card">
+          <h2 className="section-title">Campo da Gioco</h2>
+          <div className="court-container">
+            <div className="court-net" />
+            <div className="court-field">
+              <div className="court-grid">
                 {ZONE_GRID.flat().map(zone => {
                   const pIdx = players.findIndex(p => p.zone === zone);
                   const player = pIdx >= 0 ? players[pIdx] : null;
@@ -282,43 +276,24 @@ export default function App() {
                   return (
                     <div
                       key={zone}
+                      className="zone-cell"
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                        border: '1px solid rgba(255,255,255,0.4)',
                         transform: isZone6 ? 'translateY(-6px)' : undefined,
                         zIndex: isZone6 ? 10 : 1,
                       }}
                     >
-                      <span style={{ position: 'absolute', top: '2px', left: '4px', fontSize: '10px', fontWeight: 700, color: 'rgba(120,53,15,0.5)' }}>{zone}</span>
+                      <span className="zone-label">{zone}</span>
                       {player ? (
                         <button
                           onClick={() => selectPlayer(pIdx)}
-                          style={{
-                            width: '56px',
-                            height: '56px',
-                            borderRadius: '50%',
-                            border: isSelected ? '3px solid #2563eb' : '2px solid #d1d5db',
-                            background: isSelected ? '#2563eb' : '#fff',
-                            color: isSelected ? '#fff' : '#1f2937',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: isSelected ? '0 0 0 4px rgba(37,99,235,0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
-                            transition: 'all 0.15s',
-                            padding: '2px',
-                          }}
+                          className={`player-marker ${isSelected ? 'selected' : ''}`}
                         >
-                          <span style={{ fontSize: '10px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '48px' }}>{player.name}</span>
-                          <span style={{ fontSize: '9px', opacity: 0.7 }}>Z.{zone}</span>
+                          <span className="player-marker-name">{player.name}</span>
+                          <span className="player-marker-zone">Z.{zone}</span>
                         </button>
                       ) : (
-                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px dashed rgba(180,83,9,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <span style={{ fontSize: '9px', color: '#92400e' }}>Z.{zone}</span>
+                        <div className="empty-zone">
+                          <span className="empty-zone-text">Z.{zone}</span>
                         </div>
                       )}
                     </div>
@@ -327,35 +302,55 @@ export default function App() {
               </div>
             </div>
           </div>
-          <p style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.875rem', color: '#6b7280', fontStyle: 'italic' }}>{guideMsg}</p>
+          <p className="guide-message">{guideMsg}</p>
         </section>
 
         {step === 2 && (
-          <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151' }}>Dove ha colpito la palla?</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxWidth: '280px', margin: '0 auto' }}>
+          <section className="card">
+            <h3 className="section-title">Dove ha colpito la palla?</h3>
+            <div className="direction-grid">
               <div />
-              <button onClick={() => selectDirection('up')} style={dirBtnStyle(selectedDir === 'up')} title="Davanti al corpo">
-                <span style={{ fontSize: '1.5rem' }}>▲</span>
-                <span style={{ fontSize: '8px', marginTop: '2px' }}>Davanti</span>
-              </button>
-              <div />
-              <button onClick={() => selectDirection('left')} style={dirBtnStyle(selectedDir === 'left')} title="A sinistra del corpo">
-                <span style={{ fontSize: '1.5rem' }}>◀</span>
-                <span style={{ fontSize: '8px', marginTop: '2px' }}>Sinistra</span>
-              </button>
-              <button onClick={() => selectDirection('center')} style={dirBtnStyle(selectedDir === 'center')} title="Al corpo">
-                <span style={{ fontSize: '1.5rem' }}>●</span>
-                <span style={{ fontSize: '8px', marginTop: '2px' }}>Al corpo</span>
-              </button>
-              <button onClick={() => selectDirection('right')} style={dirBtnStyle(selectedDir === 'right')} title="A destra del corpo">
-                <span style={{ fontSize: '1.5rem' }}>▶</span>
-                <span style={{ fontSize: '8px', marginTop: '2px' }}>Destra</span>
+              <button
+                onClick={() => selectDirection('up')}
+                className={`direction-btn ${selectedDir === 'up' ? 'selected' : ''}`}
+                title="Davanti al corpo"
+              >
+                <span className="direction-btn-symbol">▲</span>
+                <span className="direction-btn-label">Davanti</span>
               </button>
               <div />
-              <button onClick={() => selectDirection('down')} style={dirBtnStyle(selectedDir === 'down')} title="Dietro al corpo">
-                <span style={{ fontSize: '1.5rem' }}>▼</span>
-                <span style={{ fontSize: '8px', marginTop: '2px' }}>Dietro</span>
+              <button
+                onClick={() => selectDirection('left')}
+                className={`direction-btn ${selectedDir === 'left' ? 'selected' : ''}`}
+                title="A sinistra del corpo"
+              >
+                <span className="direction-btn-symbol">◀</span>
+                <span className="direction-btn-label">Sinistra</span>
+              </button>
+              <button
+                onClick={() => selectDirection('center')}
+                className={`direction-btn ${selectedDir === 'center' ? 'selected' : ''}`}
+                title="Al corpo"
+              >
+                <span className="direction-btn-symbol">●</span>
+                <span className="direction-btn-label">Al corpo</span>
+              </button>
+              <button
+                onClick={() => selectDirection('right')}
+                className={`direction-btn ${selectedDir === 'right' ? 'selected' : ''}`}
+                title="A destra del corpo"
+              >
+                <span className="direction-btn-symbol">▶</span>
+                <span className="direction-btn-label">Destra</span>
+              </button>
+              <div />
+              <button
+                onClick={() => selectDirection('down')}
+                className={`direction-btn ${selectedDir === 'down' ? 'selected' : ''}`}
+                title="Dietro al corpo"
+              >
+                <span className="direction-btn-symbol">▼</span>
+                <span className="direction-btn-label">Dietro</span>
               </button>
               <div />
             </div>
@@ -363,59 +358,75 @@ export default function App() {
         )}
 
         {step === 3 && (
-          <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151' }}>Esito della ricezione</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
+          <section className="card">
+            <h3 className="section-title">Esito della ricezione</h3>
+            <div className="outcome-grid">
               {OUTCOMES.map(o => (
                 <button
                   key={o.key}
                   onClick={() => selectOutcome(o.key)}
-                  style={{
-                    width: '72px',
-                    height: '72px',
-                    borderRadius: '12px',
-                    background: o.bg,
-                    color: o.fg,
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: '1.5rem',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                  }}
+                  className="outcome-btn"
+                  style={{ background: o.bg, color: o.fg }}
                 >
                   {o.key}
-                  <span style={{ fontSize: '9px', fontWeight: 400, marginTop: '2px' }}>{o.label}</span>
+                  <span className="outcome-btn-label">{o.label}</span>
                 </button>
               ))}
             </div>
           </section>
         )}
 
-        <section style={cardStyle}>
-          <h2 style={{ margin: '0 0 12px', color: '#374151' }}>Comandi</h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            <button onClick={undoLast} disabled={receptions.length === 0} style={{ ...btnStyle('#eab308'), opacity: receptions.length === 0 ? 0.4 : 1 }}>↩️ Annulla ultimo</button>
-            <button onClick={resetAll} style={btnStyle('#dc2626')}>🗑️ Azzera dati</button>
-            <button onClick={exportCSV} disabled={receptions.length === 0} style={{ ...btnStyle('#16a34a'), opacity: receptions.length === 0 ? 0.4 : 1 }}>📊 Esporta CSV</button>
+        <section className="card">
+          <h2 className="section-title-left">Comandi</h2>
+          <div className="commands-grid">
+            <button
+              onClick={undoLast}
+              disabled={receptions.length === 0}
+              className="btn"
+              style={{ background: '#eab308' }}
+            >
+              ↩️ Annulla ultimo
+            </button>
+            <button onClick={resetAll} className="btn" style={{ background: '#dc2626' }}>
+              🗑️ Azzera dati
+            </button>
+            <button
+              onClick={exportCSV}
+              disabled={receptions.length === 0}
+              className="btn"
+              style={{ background: '#16a34a' }}
+            >
+              📊 Esporta CSV
+            </button>
           </div>
-          <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#6b7280' }}>Ricezioni registrate: <strong>{receptions.length}</strong></p>
+          <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#6b7280' }}>
+            Ricezioni registrate: <strong>{receptions.length}</strong>
+          </p>
         </section>
 
-        <section style={cardStyle}>
-          <h2 style={{ margin: '0 0 12px', color: '#374151' }}>Statistiche per Esito</h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={tableStyle}>
+        <section className="card">
+          <h2 className="section-title-left">Statistiche per Esito</h2>
+          <div className="table-container">
+            <table className="stats-table">
               <thead>
                 <tr>
-                  <th style={thStyle}>Giocatore</th>
-                  <th style={thStyle}>Tot</th>
+                  <th>Giocatore</th>
+                  <th>Tot</th>
                   {OUTCOMES.map(o => (
-                    <th key={o.key} style={thStyle}>
-                      <span style={{ display: 'inline-block', width: '24px', height: '24px', borderRadius: '50%', background: o.bg, color: o.fg, lineHeight: '24px', fontSize: '12px', fontWeight: 700 }}>{o.key}</span>
+                    <th key={o.key}>
+                      <span style={{
+                        display: 'inline-block',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: o.bg,
+                        color: o.fg,
+                        lineHeight: '24px',
+                        fontSize: '12px',
+                        fontWeight: 700
+                      }}>
+                        {o.key}
+                      </span>
                     </th>
                   ))}
                 </tr>
@@ -425,10 +436,10 @@ export default function App() {
                   const { total, counts } = getOutcomeStats(r => r.playerIndex === idx);
                   return (
                     <tr key={idx} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
-                      <td style={tdStyle}>{p.name}</td>
-                      <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
+                      <td>{p.name}</td>
+                      <td style={{ fontWeight: 700, textAlign: 'center' }}>{total}</td>
                       {OUTCOMES.map(o => (
-                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                        <td key={o.key} style={{ textAlign: 'center' }}>
                           <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
                           <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
                         </td>
@@ -437,12 +448,12 @@ export default function App() {
                   );
                 })}
                 <tr style={{ background: '#dbeafe', fontWeight: 700 }}>
-                  <td style={tdStyle}>SQUADRA</td>
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>{receptions.length}</td>
+                  <td>SQUADRA</td>
+                  <td style={{ textAlign: 'center' }}>{receptions.length}</td>
                   {OUTCOMES.map(o => {
                     const c = receptions.filter(r => r.outcome === o.key).length;
                     return (
-                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                      <td key={o.key} style={{ textAlign: 'center' }}>
                         <div>{c}</div>
                         <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, receptions.length)}</div>
                       </td>
@@ -454,21 +465,23 @@ export default function App() {
           </div>
         </section>
 
-        <section style={cardStyle}>
-          <h2 style={{ margin: '0 0 12px', color: '#374151' }}>Punto di Ricezione per Lato</h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={tableStyle}>
+        <section className="card">
+          <h2 className="section-title-left">Punto di Ricezione per Lato</h2>
+          <div className="table-container">
+            <table className="stats-table">
               <thead>
                 <tr>
-                  <th style={thStyle}>Giocatore</th>
-                  <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Sinistra (4-7-5)</th>
-                  <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Centro (3-8-6)</th>
-                  <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Destra (2-9-1)</th>
+                  <th>Giocatore</th>
+                  <th style={{ textAlign: 'center' }} colSpan={5}>Sinistra (4-7-5)</th>
+                  <th style={{ textAlign: 'center' }} colSpan={5}>Centro (3-8-6)</th>
+                  <th style={{ textAlign: 'center' }} colSpan={5}>Destra (2-9-1)</th>
                 </tr>
                 <tr>
                   {['S', 'C', 'D'].map(s =>
                     DIRECTIONS.map(d => (
-                      <th key={`${s}-${d.key}`} style={{ ...thStyle, fontSize: '14px', padding: '4px' }} title={d.label}>{d.symbol}</th>
+                      <th key={`${s}-${d.key}`} style={{ fontSize: '14px', padding: '4px' }} title={d.label}>
+                        {d.symbol}
+                      </th>
                     ))
                   )}
                 </tr>
@@ -476,11 +489,11 @@ export default function App() {
               <tbody>
                 {players.map((p, idx) => (
                   <tr key={idx} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
-                    <td style={tdStyle}>{p.name}</td>
+                    <td>{p.name}</td>
                     {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
                       const { total, counts } = getDirectionStats(idx, side);
                       return DIRECTIONS.map(d => (
-                        <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                        <td key={`${side}-${d.key}`} style={{ textAlign: 'center', fontSize: '11px' }}>
                           <div style={{ fontWeight: 700 }}>{counts[d.key]}</div>
                           <div style={{ fontSize: '9px', color: '#6b7280' }}>{pct(counts[d.key], total)}</div>
                         </td>
@@ -489,11 +502,11 @@ export default function App() {
                   </tr>
                 ))}
                 <tr style={{ background: '#dbeafe', fontWeight: 700 }}>
-                  <td style={tdStyle}>SQUADRA</td>
+                  <td>SQUADRA</td>
                   {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
                     const { total, counts } = getDirectionStats(null, side);
                     return DIRECTIONS.map(d => (
-                      <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                      <td key={`${side}-${d.key}`} style={{ textAlign: 'center', fontSize: '11px' }}>
                         <div>{counts[d.key]}</div>
                         <div style={{ fontSize: '9px', color: '#374151' }}>{pct(counts[d.key], total)}</div>
                       </td>
@@ -508,61 +521,3 @@ export default function App() {
     </div>
   );
 }
-
-function dirBtnStyle(selected: boolean): React.CSSProperties {
-  return {
-    width: '72px',
-    height: '72px',
-    borderRadius: '12px',
-    border: selected ? '3px solid #2563eb' : '2px solid #d1d5db',
-    background: selected ? '#2563eb' : '#f3f4f6',
-    color: selected ? '#fff' : '#374151',
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: 700,
-    boxShadow: selected ? '0 0 0 3px rgba(37,99,235,0.2)' : '0 1px 3px rgba(0,0,0,0.1)',
-  };
-}
-
-const cardStyle: React.CSSProperties = {
-  background: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  padding: '16px',
-  marginBottom: '16px',
-};
-
-const btnStyle = (bg: string): React.CSSProperties => ({
-  padding: '10px 16px',
-  background: bg,
-  color: '#fff',
-  border: 'none',
-  borderRadius: '8px',
-  cursor: 'pointer',
-  fontWeight: 600,
-  fontSize: '0.875rem',
-});
-
-const tableStyle: React.CSSProperties = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  minWidth: '600px',
-  fontSize: '0.8rem',
-};
-
-const thStyle: React.CSSProperties = {
-  border: '1px solid #d1d5db',
-  padding: '8px 6px',
-  background: '#1e40af',
-  color: '#fff',
-  textAlign: 'center',
-  fontWeight: 600,
-};
-
-const tdStyle: React.CSSProperties = {
-  border: '1px solid #d1d5db',
-  padding: '6px',
-};
