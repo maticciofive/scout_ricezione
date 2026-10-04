@@ -32,6 +32,19 @@
   font-size: clamp(1.3rem, 4vw, 1.8rem);
 }
 
+.tabella-direzione-esito-filtri {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .tabella-direzione-esito-filtri {
+    flex-direction: row;
+    gap: 16px;
+  }
+}
+
 .tabella-direzione-esito-filtro {
   display: flex;
   align-items: center;

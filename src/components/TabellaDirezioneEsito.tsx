@@ -52,12 +52,19 @@ const ESITI = [
 
 export default function TabellaDirezioneEsito({ giocatori, colpi }: TabellaDirezioneEsitoProps) {
   const [latoSelezionato, setLatoSelezionato] = useState<string>('tutti');
+  const [giocatoreSelezionato, setGiocatoreSelezionato] = useState<string>('tutti');
 
-  // Filtra i colpi per lato del campo
+  // Filtra i colpi per lato del campo e giocatore
   const filtraColpiPerLato = (lati: string[]) => {
-    if (lati.length === 0) return colpi;
-    
     return colpi.filter(c => {
+      // Filtro per giocatore
+      if (giocatoreSelezionato !== 'tutti' && c.playerIndex !== parseInt(giocatoreSelezionato)) {
+        return false;
+      }
+      
+      // Filtro per lato del campo
+      if (lati.length === 0) return true;
+      
       // Trova il lato del campo in base alla zona del giocatore
       const giocatore = giocatori[c.playerIndex];
       if (!giocatore) return false;
@@ -102,21 +109,40 @@ export default function TabellaDirezioneEsito({ giocatori, colpi }: TabellaDirez
           📊 Corrispondenza Direzione × Esito per Lato
         </h2>
         
-        <div className="tabella-direzione-esito-filtro">
-          <label htmlFor="lato-select">Lato del campo:</label>
-          <select
-            id="lato-select"
-            value={latoSelezionato}
-            onChange={(e) => setLatoSelezionato(e.target.value)}
-            className="tabella-direzione-esito-select"
-          >
-            <option value="tutti">Tutti i lati</option>
-            {LATI_CAMPO.map((lato) => (
-              <option key={lato.nome} value={lato.nome}>
-                {lato.nome} ({lato.zone.join('-')})
-              </option>
-            ))}
-          </select>
+        <div className="tabella-direzione-esito-filtri">
+          <div className="tabella-direzione-esito-filtro">
+            <label htmlFor="giocatore-select">Giocatore:</label>
+            <select
+              id="giocatore-select"
+              value={giocatoreSelezionato}
+              onChange={(e) => setGiocatoreSelezionato(e.target.value)}
+              className="tabella-direzione-esito-select"
+            >
+              <option value="tutti">Tutti i giocatori</option>
+              {giocatori.map((giocatore, index) => (
+                <option key={giocatore.id} value={index.toString()}>
+                  {giocatore.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="tabella-direzione-esito-filtro">
+            <label htmlFor="lato-select">Lato del campo:</label>
+            <select
+              id="lato-select"
+              value={latoSelezionato}
+              onChange={(e) => setLatoSelezionato(e.target.value)}
+              className="tabella-direzione-esito-select"
+            >
+              <option value="tutti">Tutti i lati</option>
+              {LATI_CAMPO.map((lato) => (
+                <option key={lato.nome} value={lato.nome}>
+                  {lato.nome} ({lato.zone.join('-')})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -125,11 +151,16 @@ export default function TabellaDirezioneEsito({ giocatori, colpi }: TabellaDirez
           const colpiLato = filtraColpiPerLato([lato.nome]);
           const stats = calcolaStatistiche(colpiLato);
           const totaleLato = colpiLato.length;
+          
+          // Determina il nome del giocatore o "Tutti i giocatori"
+          const nomeGiocatore = giocatoreSelezionato === 'tutti' 
+            ? 'Tutti i giocatori'
+            : giocatori[parseInt(giocatoreSelezionato)]?.name || 'Giocatore sconosciuto';
 
           return (
             <div key={lato.nome} className="tabella-lato-section">
               <h3 className="tabella-lato-titolo">
-                {lato.descrizione}
+                {lato.descrizione} - {nomeGiocatore}
                 <span className="tabella-lato-totale">
                   Totale: {totaleLato} ricezioni
                 </span>
