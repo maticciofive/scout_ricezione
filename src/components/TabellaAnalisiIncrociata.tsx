@@ -29,8 +29,19 @@ const TIPOLOGIE_BATTUTA = ['Flottante', 'Jump Top Spin', 'Jump Flottante'];
 const ZONE_BATTUTA = [1, 5, 6];
 const TIPI_BATTUTA = ['F', 'SF', 'SS', 'SP', 'FL'];
 const ZONE_CAMPO = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-const FONDAMENTALI = ['Bagher', 'Palleggio'];
-const DIREZIONI = ['Davanti', 'Dietro', 'Sinistra', 'Destra', 'Centro'];
+// FIX: I fondamentali sono salvati come 'B' e 'P', non come nomi completi
+const FONDAMENTALI = [
+  { key: 'B', label: 'Bagher' },
+  { key: 'P', label: 'Palleggio' }
+];
+// FIX: Le direzioni sono salvate come 'up', 'left', 'center', 'right', 'down'
+const DIREZIONI = [
+  { key: 'up', symbol: '▲', label: 'Avanti' },
+  { key: 'left', symbol: '◀', label: 'Sinistra' },
+  { key: 'center', symbol: '●', label: 'Centro' },
+  { key: 'right', symbol: '▶', label: 'Destra' },
+  { key: 'down', symbol: '▼', label: 'Dietro' }
+];
 
 export default function TabellaAnalisiIncrociata({ giocatori, colpi }: TabellaAnalisiIncrociataProps) {
   // Stati per i filtri
@@ -265,8 +276,8 @@ export default function TabellaAnalisiIncrociata({ giocatori, colpi }: TabellaAn
             >
               <option value="tutti">Tutti i fondamentali</option>
               {FONDAMENTALI.map((fond) => (
-                <option key={fond} value={fond}>
-                  {fond}
+                <option key={fond.key} value={fond.key}>
+                  {fond.label}
                 </option>
               ))}
             </select>
@@ -282,8 +293,8 @@ export default function TabellaAnalisiIncrociata({ giocatori, colpi }: TabellaAn
             >
               <option value="tutte">Tutte le direzioni</option>
               {DIREZIONI.map((dir) => (
-                <option key={dir} value={dir}>
-                  {dir}
+                <option key={dir.key} value={dir.key}>
+                  {dir.symbol} {dir.label}
                 </option>
               ))}
             </select>
