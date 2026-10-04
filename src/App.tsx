@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ResocontoAnalisi from './components/ResocontoAnalisi'; // NUOVO
+import AnalisiMultipla from './components/AnalisiMultipla'; // NUOVO - Analisi multi-giornata
 
 interface Player {
   id: number;
@@ -1770,6 +1771,9 @@ export default function App() {
 
         {/* NUOVO: Resoconto Analisi Completa */}
         <ResocontoAnalisi giocatori={players} colpi={receptions} />
+
+        {/* NUOVO: Analisi Multi-Giornata */}
+        <AnalisiMultipla />
       </div>
     </div>
   );
