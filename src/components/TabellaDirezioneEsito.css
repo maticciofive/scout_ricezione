@@ -1,0 +1,232 @@
+/**
+ * Stili per TabellaDirezioneEsito
+ * NUOVO FILE
+ */
+
+.tabella-direzione-esito-container {
+  background: white;
+  border-radius: 12px;
+  padding: clamp(16px, 3vw, 24px);
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tabella-direzione-esito-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 768px) {
+  .tabella-direzione-esito-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.tabella-direzione-esito-titolo {
+  margin: 0;
+  color: #1e40af;
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+}
+
+.tabella-direzione-esito-filtro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tabella-direzione-esito-filtro label {
+  font-weight: 600;
+  color: #374151;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+}
+
+.tabella-direzione-esito-select {
+  padding: 8px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.tabella-direzione-esito-select:hover {
+  border-color: #3b82f6;
+}
+
+.tabella-direzione-esito-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.tabella-direzione-esito-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.tabella-lato-section {
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f9fafb;
+}
+
+.tabella-lato-titolo {
+  margin: 0 0 16px 0;
+  color: #1e40af;
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tabella-lato-totale {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.tabella-vuota {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 1rem;
+}
+
+.tabella-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabella-direzione-esito {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  min-width: 600px;
+}
+
+.tabella-direzione-esito thead {
+  background: #1e40af;
+  color: white;
+}
+
+.tabella-direzione-esito thead th {
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #1e3a8a;
+}
+
+.tabella-direzione-esito thead .colonna-direzione {
+  width: 150px;
+  background: #1e40af;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+}
+
+.tabella-direzione-esito thead .header-esiti {
+  background: #2563eb;
+}
+
+.tabella-direzione-esito thead .header-esito {
+  width: 80px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.tabella-direzione-esito tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+
+.tabella-direzione-esito tbody tr:hover {
+  background-color: #f3f4f6;
+}
+
+.tabella-direzione-esito tbody td {
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+  text-align: center;
+  border: 1px solid #e5e7eb;
+}
+
+.tabella-direzione-esito tbody .cella-direzione {
+  font-weight: 700;
+  background: #f3f4f6;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  text-align: left;
+  padding-left: 12px;
+}
+
+.direzione-symbol {
+  font-size: 1.5rem;
+  margin-right: 8px;
+  display: inline-block;
+  width: 30px;
+  text-align: center;
+}
+
+.direzione-label {
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.tabella-direzione-esito tbody .cella-esito {
+  transition: background-color 0.2s;
+}
+
+.esito-count {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1f2937;
+}
+
+.esito-percentage {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tabella-direzione-esito-container {
+    padding: 12px;
+  }
+  
+  .tabella-direzione-esito {
+    font-size: 0.85rem;
+  }
+  
+  .tabella-direzione-esito thead th,
+  .tabella-direzione-esito tbody td {
+    padding: 0.5rem;
+  }
+  
+  .tabella-direzione-esito thead .header-esito {
+    font-size: 1rem;
+  }
+  
+  .direzione-symbol {
+    font-size: 1.2rem;
+    width: 25px;
+  }
+  
+  .direzione-label {
+    font-size: 0.8rem;
+  }
+  
+  .esito-count {
+    font-size: 1rem;
+  }
+}
