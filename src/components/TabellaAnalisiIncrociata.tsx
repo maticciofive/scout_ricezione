@@ -4,9 +4,8 @@ import './TabellaAnalisiIncrociata.css';
 interface Colpo {
   playerIndex: number;
   side?: string;
-  serveTypology?: string;
+  serveType?: string; // FIX: Campo effettivo salvato nei dati
   serveZone?: number;
-  serveType?: string;
   zone?: number;
   fundamental?: string;
   direction?: string;
@@ -25,7 +24,14 @@ interface TabellaAnalisiIncrociataProps {
 
 // Costanti per i filtri
 const ZONE_RICEZIONE = ['Sinistra', 'Centro', 'Destra'];
-const TIPOLOGIE_BATTUTA = ['Flottante', 'Jump Top Spin', 'Jump Flottante'];
+// FIX: Usa i codici effettivi salvati nei dati (serveType)
+const TIPOLOGIE_BATTUTA = [
+  { key: 'F', label: 'Float' },
+  { key: 'SF', label: 'Salto Float' },
+  { key: 'SS', label: 'Salto Spin' },
+  { key: 'SP', label: 'Splot' },
+  { key: 'FL', label: 'Flin' }
+];
 const ZONE_BATTUTA = [1, 5, 6];
 const TIPI_BATTUTA = ['F', 'SF', 'SS', 'SP', 'FL'];
 const ZONE_CAMPO = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -66,8 +72,8 @@ export default function TabellaAnalisiIncrociata({ giocatori, colpi }: TabellaAn
       return false;
     }
     
-    // Filtro tipologia
-    if (tipologiaFiltro !== 'tutte' && c.serveTypology !== tipologiaFiltro) {
+    // Filtro tipologia - FIX: usa serveType invece di serveTypology
+    if (tipologiaFiltro !== 'tutte' && c.serveType !== tipologiaFiltro) {
       return false;
     }
     
@@ -105,7 +111,8 @@ export default function TabellaAnalisiIncrociata({ giocatori, colpi }: TabellaAn
     
     ZONE_RICEZIONE.forEach(zona => {
       TIPOLOGIE_BATTUTA.forEach(tipologia => {
-        const colpiCella = colpiFiltrati.filter(c => c.side === zona && c.serveTypology === tipologia);
+        // FIX: Usa tipologia.key per il filtering (valore effettivo salvato nei dati)
+        const colpiCella = colpiFiltrati.filter(c => c.side === zona && c.serveType === tipologia.key);
         const totale = colpiCella.length;
         
         if (totale > 0) {
@@ -118,7 +125,7 @@ export default function TabellaAnalisiIncrociata({ giocatori, colpi }: TabellaAn
           
           risultati.push({
             zona,
-            tipologia,
+            tipologia: tipologia.label, // Mostra l'etichetta leggibile
             totale,
             esiti: {
               perfetta: Math.round((perfetta / totale) * 1000) / 10,
@@ -208,8 +215,8 @@ export default function TabellaAnalisiIncrociata({ giocatori, colpi }: TabellaAn
             >
               <option value="tutte">Tutte le tipologie</option>
               {TIPOLOGIE_BATTUTA.map((tipologia) => (
-                <option key={tipologia} value={tipologia}>
-                  {tipologia}
+                <option key={tipologia.key} value={tipologia.key}>
+                  {tipologia.label}
                 </option>
               ))}
             </select>
