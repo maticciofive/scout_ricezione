@@ -3,7 +3,8 @@
  */
 
 import { AnalisiGiocatore } from './analisi';
-import { emojiPerClassifica } from './metriche';
+// FIX DISTINZIONE ESITI: Import di getLatoDaZona per precisione spaziale
+import { emojiPerClassifica, getLatoDaZona } from './metriche';
 
 /**
  * Genera e scarica un file di testo con il resoconto completo
@@ -42,8 +43,14 @@ export function esportaResoconto(analisiList: AnalisiGiocatore[]): void {
     contenuto += `   Totale colpi: ${analisi.totaleColpi}\n`;
     contenuto += `   Percentuale Positiva (PP): ${analisi.metricheGlobali.pp.toFixed(1)}% ${emojiPerClassifica(analisi.metricheGlobali.classificaPP)}\n`;
     contenuto += `   Efficienza (ER): ${analisi.metricheGlobali.er.toFixed(1)}% ${emojiPerClassifica(analisi.metricheGlobali.classificaER)}\n`;
-    contenuto += `   Percentuale Errori (PE): ${analisi.metricheGlobali.pe.toFixed(1)}%\n`;
-    contenuto += `   Percentuale Negativa (PN): ${analisi.metricheGlobali.pn.toFixed(1)}%\n\n`;
+    // FIX DISTINZIONE ESITI: Separa chiaramente Errori (=) da Negative (-)
+    contenuto += `   Errori Diretti/Ace Subiti (=): ${analisi.metricheGlobali.pe.toFixed(1)}%`;
+    if (analisi.metricheGlobali.pe >= 15) {
+      contenuto += ` ⚠️ CRITICO\n`;
+    } else {
+      contenuto += `\n`;
+    }
+    contenuto += `   Ricezioni Negative/Giocabili (-): ${analisi.metricheGlobali.pn.toFixed(1)}%\n\n`;
     
     // Analisi per velocità
     if (analisi.perVelocita.some(v => v.totale > 0)) {
@@ -102,13 +109,24 @@ export function esportaResoconto(analisiList: AnalisiGiocatore[]): void {
     if (analisi.puntiDeboli.caratteristicheNegativita) {
       contenuto += `   ⚠️ Caratteristiche negatività: ${analisi.puntiDeboli.caratteristicheNegativita}\n`;
     }
-    if (analisi.puntiDeboli.esitoNegativoPrevalente) contenuto += `   ⚠️ Esito negativo prevalente: ${analisi.puntiDeboli.esitoNegativoPrevalente}\n`;
-    if (analisi.puntiDeboli.zonaCritica) contenuto += `   ⚠️ Zona con più negatività: ${analisi.puntiDeboli.zonaCritica}\n`;
-    if (analisi.puntiDeboli.direzioneCritica) contenuto += `   ⚠️ Direzione con più negatività: ${analisi.puntiDeboli.direzioneCritica}\n`;
-    if (analisi.puntiDeboli.provenienzaCritica) contenuto += `   ⚠️ Provenienza con più negatività: ${analisi.puntiDeboli.provenienzaCritica}\n`;
-    if (analisi.puntiDeboli.velocitaCritica) contenuto += `   ⚠️ Velocità con più negatività: ${analisi.puntiDeboli.velocitaCritica}\n`;
-    if (analisi.puntiDeboli.tipologiaCritica) contenuto += `   ⚠️ Tipologia con più negatività: ${analisi.puntiDeboli.tipologiaCritica}\n`;
-    if (analisi.puntiDeboli.combinazionePeggiore) contenuto += `   ⚠️ Combinazione con più negatività: ${analisi.puntiDeboli.combinazionePeggiore}\n`;
+    if (analisi.puntiDeboli.esitoNegativoPrevalente) {
+      // FIX DISTINZIONE ESITI: Mostra separatamente Errori (=) e Negative (-)
+      contenuto += `   ⚠️ Esito negativo prevalente: ${analisi.puntiDeboli.esitoNegativoPrevalente}\n`;
+    }
+    if (analisi.puntiDeboli.zonaCritica) {
+      // FIX SPATIALE: Usa getLatoDaZona per precisione spaziale
+      const latoCorretto = getLatoDaZona(analisi.puntiDeboli.zonaCritica);
+      contenuto += `   ⚠️ Zona ${analisi.puntiDeboli.zonaCritica}: lavorare sul lato ${latoCorretto}`;
+      if (analisi.metricheGlobali.pe >= 15) {
+        contenuto += ` (CRITICO: ${analisi.metricheGlobali.pe.toFixed(1)}% errori diretti)`;
+      }
+      contenuto += `\n`;
+    }
+    if (analisi.puntiDeboli.direzioneCritica) contenuto += `   ⚠️ Direzione critica: ${analisi.puntiDeboli.direzioneCritica}\n`;
+    if (analisi.puntiDeboli.provenienzaCritica) contenuto += `   ⚠️ Provenienza critica: ${analisi.puntiDeboli.provenienzaCritica}\n`;
+    if (analisi.puntiDeboli.velocitaCritica) contenuto += `   ⚠️ Velocità critica: ${analisi.puntiDeboli.velocitaCritica}\n`;
+    if (analisi.puntiDeboli.tipologiaCritica) contenuto += `   ⚠️ Tipologia critica: ${analisi.puntiDeboli.tipologiaCritica}\n`;
+    if (analisi.puntiDeboli.combinazionePeggiore) contenuto += `   ⚠️ Combinazione critica: ${analisi.puntiDeboli.combinazionePeggiore}\n`;
     contenuto += '\n';
     
     // Sintesi
