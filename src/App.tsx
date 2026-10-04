@@ -207,17 +207,17 @@ export default function App() {
       : '✅ Scegli l\'esito della ricezione';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <header style={{ background: '#1e40af', color: '#fff', padding: '16px', textAlign: 'center' }}>
-        <h1 style={{ margin: 0, fontSize: '1.5rem' }}>🏐 Scouting Ricezione</h1>
-        <p style={{ margin: '4px 0 0', opacity: 0.8, fontSize: '0.875rem' }}>Analisi della ricezione nella pallavolo</p>
+        <h1 style={{ margin: 0, fontSize: 'clamp(1.25rem, 4vw, 1.5rem)' }}>🏐 Scouting Ricezione</h1>
+        <p style={{ margin: '4px 0 0', opacity: 0.8, fontSize: 'clamp(0.75rem, 3vw, 0.875rem)' }}>Analisi della ricezione nella pallavolo</p>
       </header>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '16px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(8px, 2vw, 16px)' }}>
         <section style={cardStyle}>
           <button
             onClick={() => setShowConfig(!showConfig)}
-            style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 600, color: '#374151', padding: 0 }}
+            style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)', fontWeight: 600, color: '#374151', padding: 0 }}
           >
             <span>⚙️ Configurazione Giocatori</span>
             <span style={{ fontSize: '1.5rem' }}>{showConfig ? '−' : '+'}</span>
@@ -262,8 +262,8 @@ export default function App() {
         </section>
 
         <section style={cardStyle}>
-          <h2 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151' }}>Campo da Gioco</h2>
-          <div style={{ maxWidth: '380px', margin: '0 auto' }}>
+          <h2 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>Campo da Gioco</h2>
+          <div style={{ maxWidth: '380px', margin: '0 auto', width: '100%' }}>
             <div style={{ height: '10px', background: 'linear-gradient(90deg, #4b5563, #9ca3af, #4b5563)', borderRadius: '6px 6px 0 0' }} />
             <div style={{
               background: 'linear-gradient(180deg, #fef3c7, #fde68a)',
@@ -292,13 +292,13 @@ export default function App() {
                         zIndex: isZone6 ? 10 : 1,
                       }}
                     >
-                      <span style={{ position: 'absolute', top: '2px', left: '4px', fontSize: '10px', fontWeight: 700, color: 'rgba(120,53,15,0.5)' }}>{zone}</span>
+                      <span style={{ position: 'absolute', top: '2px', left: '4px', fontSize: 'clamp(8px, 2vw, 10px)', fontWeight: 700, color: 'rgba(120,53,15,0.5)' }}>{zone}</span>
                       {player ? (
                         <button
                           onClick={() => selectPlayer(pIdx)}
                           style={{
-                            width: '56px',
-                            height: '56px',
+                            width: 'clamp(44px, 15vw, 56px)',
+                            height: 'clamp(44px, 15vw, 56px)',
                             borderRadius: '50%',
                             border: isSelected ? '3px solid #2563eb' : '2px solid #d1d5db',
                             background: isSelected ? '#2563eb' : '#fff',
@@ -313,12 +313,12 @@ export default function App() {
                             padding: '2px',
                           }}
                         >
-                          <span style={{ fontSize: '10px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '48px' }}>{player.name}</span>
-                          <span style={{ fontSize: '9px', opacity: 0.7 }}>Z.{zone}</span>
+                          <span style={{ fontSize: 'clamp(8px, 2.5vw, 10px)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'clamp(36px, 12vw, 48px)' }}>{player.name}</span>
+                          <span style={{ fontSize: 'clamp(7px, 2vw, 9px)', opacity: 0.7 }}>Z.{zone}</span>
                         </button>
                       ) : (
-                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px dashed rgba(180,83,9,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <span style={{ fontSize: '9px', color: '#92400e' }}>Z.{zone}</span>
+                        <div style={{ width: 'clamp(28px, 10vw, 36px)', height: 'clamp(28px, 10vw, 36px)', borderRadius: '50%', border: '1px dashed rgba(180,83,9,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ fontSize: 'clamp(7px, 2vw, 9px)', color: '#92400e' }}>Z.{zone}</span>
                         </div>
                       )}
                     </div>
@@ -327,35 +327,35 @@ export default function App() {
               </div>
             </div>
           </div>
-          <p style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.875rem', color: '#6b7280', fontStyle: 'italic' }}>{guideMsg}</p>
+          <p style={{ textAlign: 'center', marginTop: '12px', fontSize: 'clamp(0.75rem, 3vw, 0.875rem)', color: '#6b7280', fontStyle: 'italic' }}>{guideMsg}</p>
         </section>
 
         {step === 2 && (
           <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151' }}>Dove ha colpito la palla?</h3>
+            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Dove ha colpito la palla?</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxWidth: '280px', margin: '0 auto' }}>
               <div />
               <button onClick={() => selectDirection('up')} style={dirBtnStyle(selectedDir === 'up')} title="Davanti al corpo">
-                <span style={{ fontSize: '1.5rem' }}>▲</span>
-                <span style={{ fontSize: '8px', marginTop: '2px' }}>Davanti</span>
+                <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>▲</span>
+                <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', marginTop: '2px' }}>Davanti</span>
               </button>
               <div />
               <button onClick={() => selectDirection('left')} style={dirBtnStyle(selectedDir === 'left')} title="A sinistra del corpo">
-                <span style={{ fontSize: '1.5rem' }}>◀</span>
-                <span style={{ fontSize: '8px', marginTop: '2px' }}>Sinistra</span>
+                <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>◀</span>
+                <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', marginTop: '2px' }}>Sinistra</span>
               </button>
               <button onClick={() => selectDirection('center')} style={dirBtnStyle(selectedDir === 'center')} title="Al corpo">
-                <span style={{ fontSize: '1.5rem' }}>●</span>
-                <span style={{ fontSize: '8px', marginTop: '2px' }}>Al corpo</span>
+                <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>●</span>
+                <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', marginTop: '2px' }}>Al corpo</span>
               </button>
               <button onClick={() => selectDirection('right')} style={dirBtnStyle(selectedDir === 'right')} title="A destra del corpo">
-                <span style={{ fontSize: '1.5rem' }}>▶</span>
-                <span style={{ fontSize: '8px', marginTop: '2px' }}>Destra</span>
+                <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>▶</span>
+                <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', marginTop: '2px' }}>Destra</span>
               </button>
               <div />
               <button onClick={() => selectDirection('down')} style={dirBtnStyle(selectedDir === 'down')} title="Dietro al corpo">
-                <span style={{ fontSize: '1.5rem' }}>▼</span>
-                <span style={{ fontSize: '8px', marginTop: '2px' }}>Dietro</span>
+                <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>▼</span>
+                <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', marginTop: '2px' }}>Dietro</span>
               </button>
               <div />
             </div>
@@ -364,15 +364,15 @@ export default function App() {
 
         {step === 3 && (
           <section style={cardStyle}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151' }}>Esito della ricezione</h3>
+            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Esito della ricezione</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
               {OUTCOMES.map(o => (
                 <button
                   key={o.key}
                   onClick={() => selectOutcome(o.key)}
                   style={{
-                    width: '72px',
-                    height: '72px',
+                    width: 'clamp(60px, 18vw, 72px)',
+                    height: 'clamp(60px, 18vw, 72px)',
                     borderRadius: '12px',
                     background: o.bg,
                     color: o.fg,
@@ -383,12 +383,12 @@ export default function App() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 700,
-                    fontSize: '1.5rem',
+                    fontSize: 'clamp(1.25rem, 5vw, 1.5rem)',
                     boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                   }}
                 >
                   {o.key}
-                  <span style={{ fontSize: '9px', fontWeight: 400, marginTop: '2px' }}>{o.label}</span>
+                  <span style={{ fontSize: 'clamp(8px, 2vw, 9px)', fontWeight: 400, marginTop: '2px' }}>{o.label}</span>
                 </button>
               ))}
             </div>
@@ -396,7 +396,7 @@ export default function App() {
         )}
 
         <section style={cardStyle}>
-          <h2 style={{ margin: '0 0 12px', color: '#374151' }}>Comandi</h2>
+          <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>Comandi</h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             <button onClick={undoLast} disabled={receptions.length === 0} style={{ ...btnStyle('#eab308'), opacity: receptions.length === 0 ? 0.4 : 1 }}>↩️ Annulla ultimo</button>
             <button onClick={resetAll} style={btnStyle('#dc2626')}>🗑️ Azzera dati</button>
@@ -406,9 +406,9 @@ export default function App() {
         </section>
 
         <section style={cardStyle}>
-          <h2 style={{ margin: '0 0 12px', color: '#374151' }}>Statistiche per Esito</h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={tableStyle}>
+          <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>Statistiche per Esito</h2>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px', fontSize: '0.8rem' }}>
               <thead>
                 <tr>
                   <th style={thStyle}>Giocatore</th>
@@ -455,9 +455,9 @@ export default function App() {
         </section>
 
         <section style={cardStyle}>
-          <h2 style={{ margin: '0 0 12px', color: '#374151' }}>Punto di Ricezione per Lato</h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={tableStyle}>
+          <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>Punto di Ricezione per Lato</h2>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px', fontSize: '0.8rem' }}>
               <thead>
                 <tr>
                   <th style={thStyle}>Giocatore</th>
@@ -511,8 +511,8 @@ export default function App() {
 
 function dirBtnStyle(selected: boolean): React.CSSProperties {
   return {
-    width: '72px',
-    height: '72px',
+    width: 'clamp(60px, 18vw, 72px)',
+    height: 'clamp(60px, 18vw, 72px)',
     borderRadius: '12px',
     border: selected ? '3px solid #2563eb' : '2px solid #d1d5db',
     background: selected ? '#2563eb' : '#f3f4f6',
@@ -545,13 +545,6 @@ const btnStyle = (bg: string): React.CSSProperties => ({
   fontWeight: 600,
   fontSize: '0.875rem',
 });
-
-const tableStyle: React.CSSProperties = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  minWidth: '600px',
-  fontSize: '0.8rem',
-};
 
 const thStyle: React.CSSProperties = {
   border: '1px solid #d1d5db',
