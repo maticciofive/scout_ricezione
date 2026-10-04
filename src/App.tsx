@@ -33,8 +33,8 @@ const SERVE_TYPES = [
 
 const SERVE_ZONES = [
   { zone: 1, label: 'Zona 1' },
-  { zone: 5, label: 'Zona 5' },
   { zone: 6, label: 'Zona 6' },
+  { zone: 5, label: 'Zona 5' },
 ];
 
 const FUNDAMENTALS = [
@@ -108,6 +108,7 @@ export default function App() {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
   const [showConfig, setShowConfig] = useState(false);
   const [tempCount, setTempCount] = useState(playerCount);
+  const [highlightMode, setHighlightMode] = useState<'none' | 'green' | 'orange' | 'red'>('none');
 
   useEffect(() => { saveJSON('vb_players', players); }, [players]);
   useEffect(() => { saveJSON('vb_receptions', receptions); }, [receptions]);
@@ -231,7 +232,59 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+  const exportExcel = () => {
+    const dirMap: Record<string, string> = {};
+    DIRECTIONS.forEach(d => { dirMap[d.key] = d.label; });
+    const fundMap: Record<string, string> = {};
+    FUNDAMENTALS.forEach(f => { fundMap[f.key] = f.label; });
+    const serveTypeMap: Record<string, string> = {};
+    SERVE_TYPES.forEach(s => { serveTypeMap[s.key] = s.label; });
+    
+    let html = '<html><head><meta charset="utf-8"><title>Scouting Ricezione</title></head><body>';
+    html += '<table border="1" style="border-collapse:collapse;">';
+    html += '<tr><th>Giocatore</th><th>Zona</th><th>Lato</th><th>Tipo Battuta</th><th>Zona Battuta</th><th>Fondamentale</th><th>Punto di ricezione</th><th>Esito</th><th>Data e ora</th></tr>';
+    
+    receptions.forEach(r => {
+      html += '<tr>';
+      html += `<td>${r.playerName}</td>`;
+      html += `<td>${r.zone}</td>`;
+      html += `<td>${r.side}</td>`;
+      html += `<td>${serveTypeMap[r.serveType] || r.serveType}</td>`;
+      html += `<td>${r.serveZone}</td>`;
+      html += `<td>${fundMap[r.fundamental] || r.fundamental}</td>`;
+      html += `<td>${dirMap[r.direction] || r.direction}</td>`;
+      html += `<td>${r.outcome}</td>`;
+      html += `<td>${r.timestamp}</td>`;
+      html += '</tr>';
+    });
+    
+    html += '</table></body></html>';
+    
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ricezioni_${new Date().toISOString().slice(0, 10)}.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   const pct = (n: number, t: number) => t === 0 ? '–' : `${Math.round((n / t) * 100)}%`;
+
+  const getHighlightBg = (n: number, t: number): string => {
+    if (highlightMode === 'none' || t === 0) return 'transparent';
+    const percentage = (n / t) * 100;
+    
+    if (highlightMode === 'green' && percentage >= 70) return '#d1fae5'; // verde tenue
+    if (highlightMode === 'orange' && percentage >= 40 && percentage < 70) return '#fed7aa'; // arancione tenue
+    if (highlightMode === 'red' && percentage < 40) return '#fecaca'; // rosso tenue
+    
+    return 'transparent';
+  };
 
   const getOutcomeStats = (filter: (r: Reception) => boolean) => {
     const filtered = receptions.filter(filter);
@@ -411,17 +464,20 @@ export default function App() {
                   const isSelected = pIdx === selectedPlayerIdx;
                   const isZone6 = zone === 6;
 
+                  const isBottomZone = zone === 5 || zone === 6 || zone === 1;
+                  
                   return (
                     <div
                       key={zone}
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: isBottomZone ? 'flex-start' : 'center',
                         justifyContent: 'center',
                         position: 'relative',
                         border: '1px solid rgba(255,255,255,0.4)',
                         transform: isZone6 ? 'translateY(-6px)' : undefined,
                         zIndex: isZone6 ? 10 : 1,
+                        paddingTop: isBottomZone ? '4px' : '0',
                       }}
                     >
                       <span style={{ position: 'absolute', top: '2px', left: '4px', fontSize: 'clamp(8px, 2vw, 10px)', fontWeight: 700, color: 'rgba(120,53,15,0.5)' }}>{zone}</span>
@@ -566,6 +622,15 @@ export default function App() {
             <button onClick={undoLast} disabled={receptions.length === 0} style={{ ...btnStyle('#eab308'), opacity: receptions.length === 0 ? 0.4 : 1 }}>↩️ Annulla ultimo</button>
             <button onClick={resetAll} style={btnStyle('#dc2626')}>🗑️ Azzera dati</button>
             <button onClick={exportCSV} disabled={receptions.length === 0} style={{ ...btnStyle('#16a34a'), opacity: receptions.length === 0 ? 0.4 : 1 }}>📊 Esporta CSV</button>
+            <button onClick={exportExcel} disabled={receptions.length === 0} style={{ ...btnStyle('#2563eb'), opacity: receptions.length === 0 ? 0.4 : 1 }}>📈 Esporta Excel</button>
+            <button onClick={handlePrint} style={btnStyle('#6b7280')}>🖨️ Stampa</button>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+            <span style={{ fontSize: '0.875rem', color: '#6b7280', alignSelf: 'center' }}>Evidenzia percentuali:</span>
+            <button onClick={() => setHighlightMode('none')} style={{ ...btnStyle('#9ca3af'), opacity: highlightMode === 'none' ? 1 : 0.5 }}>Nessuna</button>
+            <button onClick={() => setHighlightMode('green')} style={{ ...btnStyle('#86efac'), color: '#000', opacity: highlightMode === 'green' ? 1 : 0.5 }}>Verde (≥70%)</button>
+            <button onClick={() => setHighlightMode('orange')} style={{ ...btnStyle('#fed7aa'), color: '#000', opacity: highlightMode === 'orange' ? 1 : 0.5 }}>Arancione (40-69%)</button>
+            <button onClick={() => setHighlightMode('red')} style={{ ...btnStyle('#fecaca'), color: '#000', opacity: highlightMode === 'red' ? 1 : 0.5 }}>Rosso (&lt;40%)</button>
           </div>
           <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#6b7280' }}>Ricezioni registrate: <strong>{receptions.length}</strong></p>
         </section>
@@ -658,7 +723,7 @@ export default function App() {
                       <td style={tdStyle}>{p.name}</td>
                       <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
                       {OUTCOMES.map(o => (
-                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(counts[o.key], total) }}>
                           <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
                           <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
                         </td>
@@ -672,7 +737,7 @@ export default function App() {
                   {OUTCOMES.map(o => {
                     const c = receptions.filter(r => r.outcome === o.key).length;
                     return (
-                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(c, receptions.length) }}>
                         <div>{c}</div>
                         <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, receptions.length)}</div>
                       </td>
@@ -710,7 +775,7 @@ export default function App() {
                     {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
                       const { total, counts } = getDirectionStats(idx, side);
                       return DIRECTIONS.map(d => (
-                        <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                        <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px', background: getHighlightBg(counts[d.key], total) }}>
                           <div style={{ fontWeight: 700 }}>{counts[d.key]}</div>
                           <div style={{ fontSize: '9px', color: '#6b7280' }}>{pct(counts[d.key], total)}</div>
                         </td>
@@ -723,7 +788,7 @@ export default function App() {
                   {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
                     const { total, counts } = getDirectionStats(null, side);
                     return DIRECTIONS.map(d => (
-                      <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                      <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px', background: getHighlightBg(counts[d.key], total) }}>
                         <div>{counts[d.key]}</div>
                         <div style={{ fontSize: '9px', color: '#374151' }}>{pct(counts[d.key], total)}</div>
                       </td>
@@ -759,7 +824,7 @@ export default function App() {
                       <td style={tdStyle}>{p.name}</td>
                       <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
                       {OUTCOMES.map(o => (
-                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(counts[o.key], total) }}>
                           <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
                           <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
                         </td>
@@ -774,7 +839,7 @@ export default function App() {
                     const c = receptions.filter(r => r.outcome === o.key && r.fundamental === 'B').length;
                     const total = receptions.filter(r => r.fundamental === 'B').length;
                     return (
-                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(c, total) }}>
                         <div>{c}</div>
                         <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, total)}</div>
                       </td>
@@ -810,7 +875,7 @@ export default function App() {
                       <td style={tdStyle}>{p.name}</td>
                       <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
                       {OUTCOMES.map(o => (
-                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(counts[o.key], total) }}>
                           <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
                           <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
                         </td>
@@ -825,7 +890,7 @@ export default function App() {
                     const c = receptions.filter(r => r.outcome === o.key && r.fundamental === 'P').length;
                     const total = receptions.filter(r => r.fundamental === 'P').length;
                     return (
-                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(c, total) }}>
                         <div>{c}</div>
                         <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, total)}</div>
                       </td>
@@ -864,7 +929,7 @@ export default function App() {
                     {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
                       const { total, counts } = getDirectionStats(idx, side, 'B');
                       return DIRECTIONS.map(d => (
-                        <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                        <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px', background: getHighlightBg(counts[d.key], total) }}>
                           <div style={{ fontWeight: 700 }}>{counts[d.key]}</div>
                           <div style={{ fontSize: '9px', color: '#6b7280' }}>{pct(counts[d.key], total)}</div>
                         </td>
@@ -877,7 +942,7 @@ export default function App() {
                   {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
                     const { total, counts } = getDirectionStats(null, side, 'B');
                     return DIRECTIONS.map(d => (
-                      <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                      <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px', background: getHighlightBg(counts[d.key], total) }}>
                         <div>{counts[d.key]}</div>
                         <div style={{ fontSize: '9px', color: '#374151' }}>{pct(counts[d.key], total)}</div>
                       </td>
@@ -916,7 +981,7 @@ export default function App() {
                     {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
                       const { total, counts } = getDirectionStats(idx, side, 'P');
                       return DIRECTIONS.map(d => (
-                        <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                        <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px', background: getHighlightBg(counts[d.key], total) }}>
                           <div style={{ fontWeight: 700 }}>{counts[d.key]}</div>
                           <div style={{ fontSize: '9px', color: '#6b7280' }}>{pct(counts[d.key], total)}</div>
                         </td>
@@ -929,7 +994,7 @@ export default function App() {
                   {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
                     const { total, counts } = getDirectionStats(null, side, 'P');
                     return DIRECTIONS.map(d => (
-                      <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                      <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px', background: getHighlightBg(counts[d.key], total) }}>
                         <div>{counts[d.key]}</div>
                         <div style={{ fontSize: '9px', color: '#374151' }}>{pct(counts[d.key], total)}</div>
                       </td>
@@ -969,7 +1034,7 @@ export default function App() {
                         <td style={tdStyle}>{s.emoji} {s.label}</td>
                         <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
                         {OUTCOMES.map(o => (
-                          <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                          <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(counts[o.key], total) }}>
                             <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
                             <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
                           </td>
@@ -984,7 +1049,7 @@ export default function App() {
                   {OUTCOMES.map(o => {
                     const c = receptions.filter(r => r.outcome === o.key).length;
                     return (
-                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(c, receptions.length) }}>
                         <div>{c}</div>
                         <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, receptions.length)}</div>
                       </td>
@@ -1024,7 +1089,7 @@ export default function App() {
                         <td style={tdStyle}>{sz.label}</td>
                         <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
                         {OUTCOMES.map(o => (
-                          <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                          <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(counts[o.key], total) }}>
                             <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
                             <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
                           </td>
@@ -1039,7 +1104,7 @@ export default function App() {
                   {OUTCOMES.map(o => {
                     const c = receptions.filter(r => r.outcome === o.key).length;
                     return (
-                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(c, receptions.length) }}>
                         <div>{c}</div>
                         <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, receptions.length)}</div>
                       </td>
@@ -1073,7 +1138,7 @@ export default function App() {
                       const count = receptions.filter(r => r.serveType === s.key && r.serveZone === sz.zone).length;
                       const total = receptions.filter(r => r.serveType === s.key).length;
                       return (
-                        <td key={sz.zone} style={{ ...tdStyle, textAlign: 'center' }}>
+                        <td key={sz.zone} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(count, total) }}>
                           <div style={{ fontWeight: 700 }}>{count}</div>
                           <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(count, total)}</div>
                         </td>
