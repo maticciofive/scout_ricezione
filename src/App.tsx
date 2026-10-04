@@ -17,6 +17,7 @@ interface Reception {
   fundamental: string;
   direction: string;
   outcome: string;
+  speed: number | null;
   timestamp: string;
 }
 
@@ -105,7 +106,10 @@ export default function App() {
   const [selectedServeZone, setSelectedServeZone] = useState<number | null>(null);
   const [selectedFundamental, setSelectedFundamental] = useState<string | null>(null);
   const [selectedDir, setSelectedDir] = useState<string | null>(null);
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
+  const [selectedSpeed, setSelectedSpeed] = useState<number | null>(null);
+  const [speedInput, setSpeedInput] = useState<string>('');
+  const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1);
   const [showConfig, setShowConfig] = useState(false);
   const [tempCount, setTempCount] = useState(playerCount);
   const [highlightMode, setHighlightMode] = useState<'none' | 'green' | 'orange' | 'red'>('none');
@@ -163,7 +167,16 @@ export default function App() {
 
   const selectOutcome = (outcome: string) => {
     if (selectedPlayerIdx === null || selectedServeType === null || selectedServeZone === null || selectedFundamental === null || selectedDir === null) return;
+    setSelectedOutcome(outcome);
+    setSelectedSpeed(null);
+    setSpeedInput('');
+    setStep(7);
+  };
+
+  const saveReception = () => {
+    if (selectedPlayerIdx === null || selectedServeType === null || selectedServeZone === null || selectedFundamental === null || selectedDir === null || selectedOutcome === null) return;
     const player = players[selectedPlayerIdx];
+    const speed = speedInput.trim() === '' ? null : parseFloat(speedInput);
     const rec: Reception = {
       id: Date.now(),
       playerIndex: selectedPlayerIdx,
@@ -174,7 +187,8 @@ export default function App() {
       serveZone: selectedServeZone,
       fundamental: selectedFundamental,
       direction: selectedDir,
-      outcome,
+      outcome: selectedOutcome,
+      speed: isNaN(speed as number) ? null : speed,
       timestamp: new Date().toLocaleString('it-IT'),
     };
     setReceptions(prev => [...prev, rec]);
@@ -183,6 +197,9 @@ export default function App() {
     setSelectedServeZone(null);
     setSelectedFundamental(null);
     setSelectedDir(null);
+    setSelectedOutcome(null);
+    setSelectedSpeed(null);
+    setSpeedInput('');
     setStep(1);
   };
 
@@ -205,6 +222,9 @@ export default function App() {
     setSelectedServeZone(null);
     setSelectedFundamental(null);
     setSelectedDir(null);
+    setSelectedOutcome(null);
+    setSelectedSpeed(null);
+    setSpeedInput('');
     setStep(1);
     localStorage.removeItem('vb_players');
     localStorage.removeItem('vb_receptions');
@@ -218,9 +238,9 @@ export default function App() {
     FUNDAMENTALS.forEach(f => { fundMap[f.key] = f.label; });
     const serveTypeMap: Record<string, string> = {};
     SERVE_TYPES.forEach(s => { serveTypeMap[s.key] = s.label; });
-    const headers = ['Giocatore', 'Zona', 'Lato', 'Tipo Battuta', 'Zona Battuta', 'Fondamentale', 'Punto di ricezione', 'Esito', 'Data e ora'];
+    const headers = ['Giocatore', 'Zona', 'Lato', 'Tipo Battuta', 'Zona Battuta', 'Fondamentale', 'Punto di ricezione', 'Esito', 'Velocità (km/h)', 'Data e ora'];
     const rows = receptions.map(r =>
-      [r.playerName, r.zone, r.side, serveTypeMap[r.serveType] || r.serveType, r.serveZone, fundMap[r.fundamental] || r.fundamental, dirMap[r.direction] || r.direction, r.outcome, r.timestamp].join(';')
+      [r.playerName, r.zone, r.side, serveTypeMap[r.serveType] || r.serveType, r.serveZone, fundMap[r.fundamental] || r.fundamental, dirMap[r.direction] || r.direction, r.outcome, r.speed !== null ? r.speed : '', r.timestamp].join(';')
     );
     const csv = '\uFEFF' + [headers.join(';'), ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -242,7 +262,7 @@ export default function App() {
     
     let html = '<html><head><meta charset="utf-8"><title>Scouting Ricezione</title></head><body>';
     html += '<table border="1" style="border-collapse:collapse;">';
-    html += '<tr><th>Giocatore</th><th>Zona</th><th>Lato</th><th>Tipo Battuta</th><th>Zona Battuta</th><th>Fondamentale</th><th>Punto di ricezione</th><th>Esito</th><th>Data e ora</th></tr>';
+    html += '<tr><th>Giocatore</th><th>Zona</th><th>Lato</th><th>Tipo Battuta</th><th>Zona Battuta</th><th>Fondamentale</th><th>Punto di ricezione</th><th>Esito</th><th>Velocità (km/h)</th><th>Data e ora</th></tr>';
     
     receptions.forEach(r => {
       html += '<tr>';
@@ -254,6 +274,7 @@ export default function App() {
       html += `<td>${fundMap[r.fundamental] || r.fundamental}</td>`;
       html += `<td>${dirMap[r.direction] || r.direction}</td>`;
       html += `<td>${r.outcome}</td>`;
+      html += `<td>${r.speed !== null && r.speed !== undefined ? r.speed : ''}</td>`;
       html += `<td>${r.timestamp}</td>`;
       html += '</tr>';
     });
@@ -322,7 +343,9 @@ export default function App() {
           ? '🤲 Scegli il fondamentale usato'
           : step === 5
             ? '🎯 Scegli dove ha colpito la palla rispetto al corpo'
-            : '✅ Scegli l\'esito della ricezione';
+            : step === 6
+              ? '✅ Scegli l\'esito della ricezione'
+              : '⚡ Inserisci la velocità della battuta (km/h) o lascia vuoto';
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -616,6 +639,72 @@ export default function App() {
           </section>
         )}
 
+        {step === 7 && (
+          <section style={cardStyle}>
+            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>⚡ Velocità della battuta (km/h)</h3>
+            <p style={{ textAlign: 'center', margin: '0 0 16px', fontSize: '0.875rem', color: '#6b7280' }}>
+              Inserisci la velocità se conosciuta, altrimenti lascia vuoto e premi Salva
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              <input
+                type="number"
+                min="0"
+                max="200"
+                placeholder="es. 85"
+                value={speedInput}
+                onChange={(e) => setSpeedInput(e.target.value)}
+                style={{
+                  width: '200px',
+                  padding: '12px',
+                  fontSize: '1.25rem',
+                  border: '2px solid #d1d5db',
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  fontWeight: 600,
+                }}
+              />
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button
+                  onClick={() => {
+                    saveReception();
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#22c55e',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                  }}
+                >
+                  ✓ Salva Ricezione
+                </button>
+                <button
+                  onClick={() => {
+                    setSpeedInput('');
+                    setSelectedSpeed(null);
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#9ca3af',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                  }}
+                >
+                  ↺ Svuota
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
         <section style={cardStyle}>
           <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>Comandi</h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -651,6 +740,7 @@ export default function App() {
                     <th style={thStyle}>Fondamentale</th>
                     <th style={thStyle}>Direzione</th>
                     <th style={thStyle}>Esito</th>
+                    <th style={thStyle}>Velocità</th>
                     <th style={thStyle}>Azione</th>
                   </tr>
                 </thead>
@@ -673,6 +763,9 @@ export default function App() {
                           <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', background: outInfo?.bg, color: outInfo?.fg, fontWeight: 700 }}>
                             {r.outcome}
                           </span>
+                        </td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>
+                          {r.speed !== null && r.speed !== undefined ? `${r.speed} km/h` : '–'}
                         </td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>
                           <button
