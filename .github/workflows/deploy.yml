@@ -4,10 +4,16 @@ on:
   push:
     branches: [main]
 
+# ⚠️ QUESTA SEZIONE È FONDAMENTALE - DEVE ESSERE COSÌ:
 permissions:
   contents: read
   pages: write
-  id-token: write
+  id-token: write  # ← QUESTA RIGA MANCAVA O ERA SBAGLIATA
+
+# Permetti un solo deploy alla volta
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
