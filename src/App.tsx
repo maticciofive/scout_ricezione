@@ -12,6 +12,7 @@ interface Reception {
   playerName: string;
   zone: number;
   side: string;
+  fundamental: string;
   direction: string;
   outcome: string;
   timestamp: string;
@@ -19,6 +20,11 @@ interface Reception {
 
 const ALL_ZONES = [4, 3, 2, 7, 8, 9, 5, 6, 1];
 const ZONE_GRID = [[4, 3, 2], [7, 8, 9], [5, 6, 1]];
+
+const FUNDAMENTALS = [
+  { key: 'B', label: 'Bagher', emoji: '🤲' },
+  { key: 'P', label: 'Palleggio', emoji: '👐' },
+];
 
 const DIRECTIONS = [
   { key: 'up', symbol: '▲', label: 'Davanti al corpo' },
@@ -79,8 +85,9 @@ export default function App() {
   const [receptions, setReceptions] = useState<Reception[]>(() => loadJSON<Reception[]>('vb_receptions', []));
   const [playerCount, setPlayerCount] = useState<number>(() => loadJSON<number>('vb_count', 3));
   const [selectedPlayerIdx, setSelectedPlayerIdx] = useState<number | null>(null);
+  const [selectedFundamental, setSelectedFundamental] = useState<string | null>(null);
   const [selectedDir, setSelectedDir] = useState<string | null>(null);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [showConfig, setShowConfig] = useState(false);
   const [tempCount, setTempCount] = useState(playerCount);
 
@@ -112,17 +119,23 @@ export default function App() {
 
   const selectPlayer = (idx: number) => {
     setSelectedPlayerIdx(idx);
+    setSelectedFundamental(null);
     setSelectedDir(null);
     setStep(2);
   };
 
-  const selectDirection = (dir: string) => {
-    setSelectedDir(dir);
+  const selectFundamental = (fundamental: string) => {
+    setSelectedFundamental(fundamental);
     setStep(3);
   };
 
+  const selectDirection = (dir: string) => {
+    setSelectedDir(dir);
+    setStep(4);
+  };
+
   const selectOutcome = (outcome: string) => {
-    if (selectedPlayerIdx === null || selectedDir === null) return;
+    if (selectedPlayerIdx === null || selectedFundamental === null || selectedDir === null) return;
     const player = players[selectedPlayerIdx];
     const rec: Reception = {
       id: Date.now(),
@@ -130,12 +143,14 @@ export default function App() {
       playerName: player.name,
       zone: player.zone,
       side: getSideForZone(player.zone),
+      fundamental: selectedFundamental,
       direction: selectedDir,
       outcome,
       timestamp: new Date().toLocaleString('it-IT'),
     };
     setReceptions(prev => [...prev, rec]);
     setSelectedPlayerIdx(null);
+    setSelectedFundamental(null);
     setSelectedDir(null);
     setStep(1);
   };
@@ -151,6 +166,7 @@ export default function App() {
     setTempCount(3);
     setReceptions([]);
     setSelectedPlayerIdx(null);
+    setSelectedFundamental(null);
     setSelectedDir(null);
     setStep(1);
     localStorage.removeItem('vb_players');
@@ -161,9 +177,11 @@ export default function App() {
   const exportCSV = () => {
     const dirMap: Record<string, string> = {};
     DIRECTIONS.forEach(d => { dirMap[d.key] = d.label; });
-    const headers = ['Giocatore', 'Zona', 'Lato', 'Punto di ricezione', 'Esito', 'Data e ora'];
+    const fundMap: Record<string, string> = {};
+    FUNDAMENTALS.forEach(f => { fundMap[f.key] = f.label; });
+    const headers = ['Giocatore', 'Zona', 'Lato', 'Fondamentale', 'Punto di ricezione', 'Esito', 'Data e ora'];
     const rows = receptions.map(r =>
-      [r.playerName, r.zone, r.side, dirMap[r.direction] || r.direction, r.outcome, r.timestamp].join(';')
+      [r.playerName, r.zone, r.side, fundMap[r.fundamental] || r.fundamental, dirMap[r.direction] || r.direction, r.outcome, r.timestamp].join(';')
     );
     const csv = '\uFEFF' + [headers.join(';'), ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -186,12 +204,13 @@ export default function App() {
     return { total, counts };
   };
 
-  const getDirectionStats = (playerIdx: number | null, side: string) => {
+  const getDirectionStats = (playerIdx: number | null, side: string, fundamental?: string) => {
     const sideZones = SIDES[side];
     const filtered = receptions.filter(r => {
       const matchPlayer = playerIdx === null || r.playerIndex === playerIdx;
       const matchSide = sideZones.includes(r.zone);
-      return matchPlayer && matchSide;
+      const matchFund = !fundamental || r.fundamental === fundamental;
+      return matchPlayer && matchSide && matchFund;
     });
     const total = filtered.length;
     const counts: Record<string, number> = {};
@@ -203,8 +222,10 @@ export default function App() {
   const guideMsg = step === 1
     ? '👆 Tocca un giocatore sul campo'
     : step === 2
-      ? '🎯 Scegli dove ha colpito la palla rispetto al corpo'
-      : '✅ Scegli l\'esito della ricezione';
+      ? '🏐 Scegli il fondamentale usato'
+      : step === 3
+        ? '🎯 Scegli dove ha colpito la palla rispetto al corpo'
+        : '✅ Scegli l\'esito della ricezione';
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -332,6 +353,39 @@ export default function App() {
 
         {step === 2 && (
           <section style={cardStyle}>
+            <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Quale fondamentale hai usato?</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
+              {FUNDAMENTALS.map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => selectFundamental(f.key)}
+                  style={{
+                    width: 'clamp(120px, 35vw, 160px)',
+                    height: 'clamp(80px, 22vw, 100px)',
+                    borderRadius: '12px',
+                    background: selectedFundamental === f.key ? '#2563eb' : '#f3f4f6',
+                    color: selectedFundamental === f.key ? '#fff' : '#374151',
+                    border: selectedFundamental === f.key ? '3px solid #1d4ed8' : '2px solid #d1d5db',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: 'clamp(1.5rem, 6vw, 2rem)' }}>{f.emoji}</span>
+                  <span style={{ fontSize: 'clamp(0.875rem, 3vw, 1rem)', marginTop: '4px' }}>{f.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {step === 3 && (
+          <section style={cardStyle}>
             <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Dove ha colpito la palla?</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxWidth: '280px', margin: '0 auto' }}>
               <div />
@@ -362,7 +416,7 @@ export default function App() {
           </section>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <section style={cardStyle}>
             <h3 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Esito della ricezione</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
@@ -492,6 +546,212 @@ export default function App() {
                   <td style={tdStyle}>SQUADRA</td>
                   {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
                     const { total, counts } = getDirectionStats(null, side);
+                    return DIRECTIONS.map(d => (
+                      <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                        <div>{counts[d.key]}</div>
+                        <div style={{ fontSize: '9px', color: '#374151' }}>{pct(counts[d.key], total)}</div>
+                      </td>
+                    ));
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Statistiche per Esito - BAGHER */}
+        <section style={cardStyle}>
+          <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>🤲 Statistiche per Esito - BAGHER</h2>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px', fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Giocatore</th>
+                  <th style={thStyle}>Tot</th>
+                  {OUTCOMES.map(o => (
+                    <th key={o.key} style={thStyle}>
+                      <span style={{ display: 'inline-block', width: '24px', height: '24px', borderRadius: '50%', background: o.bg, color: o.fg, lineHeight: '24px', fontSize: '12px', fontWeight: 700 }}>{o.key}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((p, idx) => {
+                  const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.fundamental === 'B');
+                  return (
+                    <tr key={idx} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                      <td style={tdStyle}>{p.name}</td>
+                      <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
+                      {OUTCOMES.map(o => (
+                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                          <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
+                          <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+                <tr style={{ background: '#dbeafe', fontWeight: 700 }}>
+                  <td style={tdStyle}>SQUADRA</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>{receptions.filter(r => r.fundamental === 'B').length}</td>
+                  {OUTCOMES.map(o => {
+                    const c = receptions.filter(r => r.outcome === o.key && r.fundamental === 'B').length;
+                    const total = receptions.filter(r => r.fundamental === 'B').length;
+                    return (
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                        <div>{c}</div>
+                        <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, total)}</div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Statistiche per Esito - PALLEGGIO */}
+        <section style={cardStyle}>
+          <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>👐 Statistiche per Esito - PALLEGGIO</h2>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px', fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Giocatore</th>
+                  <th style={thStyle}>Tot</th>
+                  {OUTCOMES.map(o => (
+                    <th key={o.key} style={thStyle}>
+                      <span style={{ display: 'inline-block', width: '24px', height: '24px', borderRadius: '50%', background: o.bg, color: o.fg, lineHeight: '24px', fontSize: '12px', fontWeight: 700 }}>{o.key}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((p, idx) => {
+                  const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.fundamental === 'P');
+                  return (
+                    <tr key={idx} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                      <td style={tdStyle}>{p.name}</td>
+                      <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
+                      {OUTCOMES.map(o => (
+                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                          <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
+                          <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+                <tr style={{ background: '#dbeafe', fontWeight: 700 }}>
+                  <td style={tdStyle}>SQUADRA</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>{receptions.filter(r => r.fundamental === 'P').length}</td>
+                  {OUTCOMES.map(o => {
+                    const c = receptions.filter(r => r.outcome === o.key && r.fundamental === 'P').length;
+                    const total = receptions.filter(r => r.fundamental === 'P').length;
+                    return (
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center' }}>
+                        <div>{c}</div>
+                        <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, total)}</div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Punto di Ricezione per Lato - BAGHER */}
+        <section style={cardStyle}>
+          <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>🤲 Punto di Ricezione per Lato - BAGHER</h2>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px', fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle} rowSpan={2}>Giocatore</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Sinistra (4-7-5)</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Centro (3-8-6)</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Destra (2-9-1)</th>
+                </tr>
+                <tr>
+                  {['S', 'C', 'D'].map(s =>
+                    DIRECTIONS.map(d => (
+                      <th key={`${s}-${d.key}`} style={{ ...thStyle, fontSize: '14px', padding: '4px' }} title={d.label}>{d.symbol}</th>
+                    ))
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((p, idx) => (
+                  <tr key={idx} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                    <td style={tdStyle}>{p.name}</td>
+                    {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
+                      const { total, counts } = getDirectionStats(idx, side, 'B');
+                      return DIRECTIONS.map(d => (
+                        <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                          <div style={{ fontWeight: 700 }}>{counts[d.key]}</div>
+                          <div style={{ fontSize: '9px', color: '#6b7280' }}>{pct(counts[d.key], total)}</div>
+                        </td>
+                      ));
+                    })}
+                  </tr>
+                ))}
+                <tr style={{ background: '#dbeafe', fontWeight: 700 }}>
+                  <td style={tdStyle}>SQUADRA</td>
+                  {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
+                    const { total, counts } = getDirectionStats(null, side, 'B');
+                    return DIRECTIONS.map(d => (
+                      <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                        <div>{counts[d.key]}</div>
+                        <div style={{ fontSize: '9px', color: '#374151' }}>{pct(counts[d.key], total)}</div>
+                      </td>
+                    ));
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Punto di Ricezione per Lato - PALLEGGIO */}
+        <section style={cardStyle}>
+          <h2 style={{ margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>👐 Punto di Ricezione per Lato - PALLEGGIO</h2>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px', fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle} rowSpan={2}>Giocatore</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Sinistra (4-7-5)</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Centro (3-8-6)</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }} colSpan={5}>Destra (2-9-1)</th>
+                </tr>
+                <tr>
+                  {['S', 'C', 'D'].map(s =>
+                    DIRECTIONS.map(d => (
+                      <th key={`${s}-${d.key}`} style={{ ...thStyle, fontSize: '14px', padding: '4px' }} title={d.label}>{d.symbol}</th>
+                    ))
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((p, idx) => (
+                  <tr key={idx} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                    <td style={tdStyle}>{p.name}</td>
+                    {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
+                      const { total, counts } = getDirectionStats(idx, side, 'P');
+                      return DIRECTIONS.map(d => (
+                        <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
+                          <div style={{ fontWeight: 700 }}>{counts[d.key]}</div>
+                          <div style={{ fontSize: '9px', color: '#6b7280' }}>{pct(counts[d.key], total)}</div>
+                        </td>
+                      ));
+                    })}
+                  </tr>
+                ))}
+                <tr style={{ background: '#dbeafe', fontWeight: 700 }}>
+                  <td style={tdStyle}>SQUADRA</td>
+                  {(['Sinistra', 'Centro', 'Destra'] as const).map(side => {
+                    const { total, counts } = getDirectionStats(null, side, 'P');
                     return DIRECTIONS.map(d => (
                       <td key={`${side}-${d.key}`} style={{ ...tdStyle, textAlign: 'center', fontSize: '11px' }}>
                         <div>{counts[d.key]}</div>
