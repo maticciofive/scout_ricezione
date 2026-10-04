@@ -42,6 +42,7 @@ export interface AnalisiGiocatore {
     migliorVelocita: string | null;
     migliorTipologia: string | null;
     combinazioneMigliore: string | null;
+    caratteristichePositivita: string;
   };
   puntiDeboli: {
     esitoNegativoPrevalente: string | null;
@@ -51,6 +52,7 @@ export interface AnalisiGiocatore {
     velocitaCritica: string | null;
     tipologiaCritica: string | null;
     combinazionePeggiore: string | null;
+    caratteristicheNegativita: string;
   };
   sintesi: string;
 }
@@ -95,6 +97,7 @@ export function generaAnalisiCompleta(
         migliorVelocita: null,
         migliorTipologia: null,
         combinazioneMigliore: null,
+        caratteristichePositivita: '',
       },
       puntiDeboli: {
         esitoNegativoPrevalente: null,
@@ -104,6 +107,7 @@ export function generaAnalisiCompleta(
         velocitaCritica: null,
         tipologiaCritica: null,
         combinazionePeggiore: null,
+        caratteristicheNegativita: '',
       },
       sintesi: 'Dati insufficienti per un\'analisi significativa (minimo 5 colpi richiesti)',
     };
@@ -192,26 +196,28 @@ export function generaAnalisiCompleta(
     };
   });
 
-  // Punti di forza
+  // Punti di forza - dove ci sono molti esiti POSITIVI (#, +)
   const puntiDiForza = {
     migliorEsito: trovaMigliore(perEsito)?.nome || null,
-    migliorZona: trovaMigliore(perZona)?.nome || null,
-    migliorDirezione: trovaMigliore(perDirezione)?.nome || null,
-    migliorProvenienza: trovaMigliore(perProvenienza)?.nome || null,
-    migliorVelocita: trovaMigliore(perVelocita)?.nome || null,
-    migliorTipologia: trovaMigliore(perTipologia)?.nome || null,
-    combinazioneMigliore: trovaCombinazioneMigliore(colpiGiocatore),
+    migliorZona: trovaCondizioneConPiuPositivi(colpiGiocatore, 'side'),
+    migliorDirezione: trovaCondizioneConPiuPositivi(colpiGiocatore, 'direction'),
+    migliorProvenienza: trovaCondizioneConPiuPositivi(colpiGiocatore, 'serveZone'),
+    migliorVelocita: trovaCondizioneConPiuPositivi(colpiGiocatore, 'speedCategory'),
+    migliorTipologia: trovaCondizioneConPiuPositivi(colpiGiocatore, 'serveTypology'),
+    combinazioneMigliore: trovaCombinazioneConPiuPositivi(colpiGiocatore),
+    caratteristichePositivita: analizzaCaratteristichePositivita(colpiGiocatore),
   };
 
-  // Punti deboli
+  // Punti deboli - dove ci sono molti esiti NEGATIVI (=, /, -)
   const puntiDeboli = {
     esitoNegativoPrevalente: trovaEsitoNegativoPrevalente(colpiGiocatore),
-    zonaCritica: trovaPeggiore(perZona)?.nome || null,
-    direzioneCritica: trovaPeggiore(perDirezione)?.nome || null,
-    provenienzaCritica: trovaPeggiore(perProvenienza)?.nome || null,
-    velocitaCritica: trovaPeggiore(perVelocita)?.nome || null,
-    tipologiaCritica: trovaPeggiore(perTipologia)?.nome || null,
-    combinazionePeggiore: trovaCombinazionePeggiore(colpiGiocatore),
+    zonaCritica: trovaCondizioneConPiuNegativi(colpiGiocatore, 'side'),
+    direzioneCritica: trovaCondizioneConPiuNegativi(colpiGiocatore, 'direction'),
+    provenienzaCritica: trovaCondizioneConPiuNegativi(colpiGiocatore, 'serveZone'),
+    velocitaCritica: trovaCondizioneConPiuNegativi(colpiGiocatore, 'speedCategory'),
+    tipologiaCritica: trovaCondizioneConPiuNegativi(colpiGiocatore, 'serveTypology'),
+    combinazionePeggiore: trovaCombinazioneConPiuNegativi(colpiGiocatore),
+    caratteristicheNegativita: analizzaCaratteristicheNegativita(colpiGiocatore),
   };
 
   // Sintesi
@@ -249,6 +255,216 @@ function trovaPeggiore(condizioni: AnalisiCondizione[]): AnalisiCondizione | nul
   const valide = condizioni.filter(c => c.totale >= 3);
   if (valide.length === 0) return null;
   return valide.reduce((min, c) => c.pp < min.pp ? c : min, valide[0]);
+}
+
+/**
+ * Trova la condizione con più esiti POSITIVI (#, +)
+ */
+function trovaCondizioneConPiuPositivi(colpi: Colpo[], chiave: keyof Colpo): string | null {
+  const valori = [...new Set(colpi.map(c => c[chiave]).filter(v => v !== undefined && v !== 'non-specificata'))];
+  
+  let maxPositivi = 0;
+  let condizioneMigliore: string | null = null;
+  
+  valori.forEach(valore => {
+    const colpiCondizione = colpi.filter(c => c[chiave] === valore);
+    if (colpiCondizione.length < 3) return;
+    
+    const positivi = colpiCondizione.filter(c => c.outcome === '#' || c.outcome === '+').length;
+    if (positivi > maxPositivi) {
+      maxPositivi = positivi;
+      condizioneMigliore = String(valore);
+    }
+  });
+  
+  return condizioneMigliore;
+}
+
+/**
+ * Trova la condizione con più esiti NEGATIVI (=, /, -)
+ */
+function trovaCondizioneConPiuNegativi(colpi: Colpo[], chiave: keyof Colpo): string | null {
+  const valori = [...new Set(colpi.map(c => c[chiave]).filter(v => v !== undefined && v !== 'non-specificata'))];
+  
+  let maxNegativi = 0;
+  let condizionePeggiore: string | null = null;
+  
+  valori.forEach(valore => {
+    const colpiCondizione = colpi.filter(c => c[chiave] === valore);
+    if (colpiCondizione.length < 3) return;
+    
+    const negativi = colpiCondizione.filter(c => c.outcome === '=' || c.outcome === '/' || c.outcome === '-').length;
+    if (negativi > maxNegativi) {
+      maxNegativi = negativi;
+      condizionePeggiore = String(valore);
+    }
+  });
+  
+  return condizionePeggiore;
+}
+
+/**
+ * Trova la combinazione con più esiti POSITIVI
+ */
+function trovaCombinazioneConPiuPositivi(colpi: Colpo[]): string | null {
+  const combinazioni: { nome: string; positivi: number }[] = [];
+  
+  const velocita = ['Lenta', 'Media', 'Veloce'];
+  const provenienze = ['Zona 1', 'Zona 6', 'Zona 5'];
+  const zone = ['Sinistra', 'Centro', 'Destra'];
+  
+  for (const vel of velocita) {
+    for (const prov of provenienze) {
+      for (const zona of zone) {
+        const zonaNum = prov === 'Zona 1' ? 1 : prov === 'Zona 6' ? 6 : 5;
+        const filtrati = colpi.filter(c => 
+          c.speedCategory === vel && 
+          c.serveZone === zonaNum && 
+          c.side === zona
+        );
+        if (filtrati.length >= 3) {
+          const positivi = filtrati.filter(c => c.outcome === '#' || c.outcome === '+').length;
+          combinazioni.push({
+            nome: `${vel} + ${prov} + ${zona}`,
+            positivi,
+          });
+        }
+      }
+    }
+  }
+  
+  if (combinazioni.length === 0) return null;
+  return combinazioni.reduce((max, c) => c.positivi > max.positivi ? c : max, combinazioni[0]).nome;
+}
+
+/**
+ * Trova la combinazione con più esiti NEGATIVI
+ */
+function trovaCombinazioneConPiuNegativi(colpi: Colpo[]): string | null {
+  const combinazioni: { nome: string; negativi: number }[] = [];
+  
+  const velocita = ['Lenta', 'Media', 'Veloce'];
+  const provenienze = ['Zona 1', 'Zona 6', 'Zona 5'];
+  const zone = ['Sinistra', 'Centro', 'Destra'];
+  
+  for (const vel of velocita) {
+    for (const prov of provenienze) {
+      for (const zona of zone) {
+        const zonaNum = prov === 'Zona 1' ? 1 : prov === 'Zona 6' ? 6 : 5;
+        const filtrati = colpi.filter(c => 
+          c.speedCategory === vel && 
+          c.serveZone === zonaNum && 
+          c.side === zona
+        );
+        if (filtrati.length >= 3) {
+          const negativi = filtrati.filter(c => c.outcome === '=' || c.outcome === '/' || c.outcome === '-').length;
+          combinazioni.push({
+            nome: `${vel} + ${prov} + ${zona}`,
+            negativi,
+          });
+        }
+      }
+    }
+  }
+  
+  if (combinazioni.length === 0) return null;
+  return combinazioni.reduce((min, c) => c.negativi > min.negativi ? c : min, combinazioni[0]).nome;
+}
+
+/**
+ * Analizza le caratteristiche delle positività
+ */
+function analizzaCaratteristichePositivita(colpi: Colpo[]): string {
+  const positivi = colpi.filter(c => c.outcome === '#' || c.outcome === '+');
+  if (positivi.length === 0) return '';
+  
+  const caratteristiche: string[] = [];
+  
+  // Velocità più frequente nei positivi
+  const velocitaCount: Record<string, number> = {};
+  positivi.forEach(c => {
+    if (c.speedCategory && c.speedCategory !== 'non-specificata') {
+      velocitaCount[c.speedCategory] = (velocitaCount[c.speedCategory] || 0) + 1;
+    }
+  });
+  const velocitaPiuFrequente = Object.entries(velocitaCount).sort((a, b) => b[1] - a[1])[0];
+  if (velocitaPiuFrequente) {
+    caratteristiche.push(`battute ${velocitaPiuFrequente[0].toLowerCase()}`);
+  }
+  
+  // Provenienza più frequente nei positivi
+  const provCount: Record<number, number> = {};
+  positivi.forEach(c => {
+    if (c.serveZone) {
+      provCount[c.serveZone] = (provCount[c.serveZone] || 0) + 1;
+    }
+  });
+  const provPiuFrequente = Object.entries(provCount).sort((a, b) => b[1] - a[1])[0];
+  if (provPiuFrequente) {
+    caratteristiche.push(`dalla zona ${provPiuFrequente[0]}`);
+  }
+  
+  // Zona di campo più frequente nei positivi
+  const zonaCount: Record<string, number> = {};
+  positivi.forEach(c => {
+    if (c.side) {
+      zonaCount[c.side] = (zonaCount[c.side] || 0) + 1;
+    }
+  });
+  const zonaPiuFrequente = Object.entries(zonaCount).sort((a, b) => b[1] - a[1])[0];
+  if (zonaPiuFrequente) {
+    caratteristiche.push(`verso il ${zonaPiuFrequente[0].toLowerCase()}`);
+  }
+  
+  return caratteristiche.join(' ');
+}
+
+/**
+ * Analizza le caratteristiche delle negatività
+ */
+function analizzaCaratteristicheNegativita(colpi: Colpo[]): string {
+  const negativi = colpi.filter(c => c.outcome === '=' || c.outcome === '/' || c.outcome === '-');
+  if (negativi.length === 0) return '';
+  
+  const caratteristiche: string[] = [];
+  
+  // Velocità più frequente nei negativi
+  const velocitaCount: Record<string, number> = {};
+  negativi.forEach(c => {
+    if (c.speedCategory && c.speedCategory !== 'non-specificata') {
+      velocitaCount[c.speedCategory] = (velocitaCount[c.speedCategory] || 0) + 1;
+    }
+  });
+  const velocitaPiuFrequente = Object.entries(velocitaCount).sort((a, b) => b[1] - a[1])[0];
+  if (velocitaPiuFrequente) {
+    caratteristiche.push(`battute ${velocitaPiuFrequente[0].toLowerCase()}`);
+  }
+  
+  // Provenienza più frequente nei negativi
+  const provCount: Record<number, number> = {};
+  negativi.forEach(c => {
+    if (c.serveZone) {
+      provCount[c.serveZone] = (provCount[c.serveZone] || 0) + 1;
+    }
+  });
+  const provPiuFrequente = Object.entries(provCount).sort((a, b) => b[1] - a[1])[0];
+  if (provPiuFrequente) {
+    caratteristiche.push(`dalla zona ${provPiuFrequente[0]}`);
+  }
+  
+  // Zona di campo più frequente nei negativi
+  const zonaCount: Record<string, number> = {};
+  negativi.forEach(c => {
+    if (c.side) {
+      zonaCount[c.side] = (zonaCount[c.side] || 0) + 1;
+    }
+  });
+  const zonaPiuFrequente = Object.entries(zonaCount).sort((a, b) => b[1] - a[1])[0];
+  if (zonaPiuFrequente) {
+    caratteristiche.push(`verso il ${zonaPiuFrequente[0].toLowerCase()}`);
+  }
+  
+  return caratteristiche.join(' ');
 }
 
 function trovaEsitoNegativoPrevalente(colpi: Colpo[]): string | null {
@@ -336,21 +552,32 @@ function generaSintesi(
   
   let sintesi = `${nome} ha un'efficienza del ${metriche.er.toFixed(0)}% (${giudizioER}). La percentuale positiva è del ${metriche.pp.toFixed(0)}%. `;
   
-  if (puntiDiForza.combinazioneMigliore) {
+  // Punti di forza basati sulle EVIDENZE POSITIVE
+  if (puntiDiForza.caratteristichePositivita) {
+    sintesi += `Eccelle su ${puntiDiForza.caratteristichePositivita}, dove produce molti esiti positivi. `;
+  } else if (puntiDiForza.combinazioneMigliore) {
     sintesi += `Eccelle su ${puntiDiForza.combinazioneMigliore}. `;
   }
   
-  if (puntiDeboli.combinazionePeggiore) {
+  // Punti deboli basati sulle EVIDENZE NEGATIVE
+  if (puntiDeboli.caratteristicheNegativita) {
+    sintesi += `Ma ha difficoltà su ${puntiDeboli.caratteristicheNegativita}, dove si accumulano esiti negativi. `;
+  } else if (puntiDeboli.combinazionePeggiore) {
     sintesi += `Ma ha difficoltà su ${puntiDeboli.combinazionePeggiore}. `;
   }
   
-  if (puntiDeboli.velocitaCritica || puntiDeboli.provenienzaCritica) {
-    sintesi += `Raccomandazione: concentrare gli allenamenti su `;
+  // Raccomandazione basata sulle criticità
+  if (puntiDeboli.caratteristicheNegativita || puntiDeboli.velocitaCritica || puntiDeboli.provenienzaCritica) {
+    sintesi += `RACCOMANDAZIONE: Concentrare gli allenamenti su `;
     const parti = [];
     if (puntiDeboli.velocitaCritica) parti.push(`battute ${puntiDeboli.velocitaCritica.toLowerCase()}`);
     if (puntiDeboli.provenienzaCritica) parti.push(`dalla ${puntiDeboli.provenienzaCritica}`);
     if (puntiDeboli.zonaCritica) parti.push(`verso il ${puntiDeboli.zonaCritica.toLowerCase()}`);
-    sintesi += parti.join(' ') + '.';
+    if (parti.length > 0) {
+      sintesi += parti.join(' ') + ', dove si concentrano le negatività.';
+    } else {
+      sintesi += 'le situazioni che generano più esiti negativi.';
+    }
   }
   
   return sintesi;
