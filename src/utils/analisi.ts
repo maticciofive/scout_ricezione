@@ -199,19 +199,10 @@ export function generaAnalisiCompleta(
     };
   });
 
-  // Punti di forza - dove ci sono molti esiti POSITIVI (#, +)
-  const puntiDiForza = {
-    migliorEsito: trovaMigliore(perEsito)?.nome || null,
-    migliorZona: trovaCondizioneConPiuPositivi(colpiGiocatore, 'side'),
-    migliorDirezione: trovaCondizioneConPiuPositivi(colpiGiocatore, 'direction'),
-    migliorProvenienza: trovaCondizioneConPiuPositivi(colpiGiocatore, 'serveZone'),
-    migliorVelocita: trovaCondizioneConPiuPositivi(colpiGiocatore, 'speedCategory'),
-    migliorTipologia: trovaCondizioneConPiuPositivi(colpiGiocatore, 'serveTypology'),
-    combinazioneMigliore: trovaCombinazioneConPiuPositivi(colpiGiocatore),
-    caratteristichePositivita: analizzaCaratteristichePositivita(colpiGiocatore),
-  };
-
-  // Punti deboli - dove ci sono molti esiti NEGATIVI (=, /, -)
+  // FIX LOGICA MUTUA ESCLUSIONE: Calcola PRIMA i punti deboli, POI i punti di forza
+  // escludendo le zone/direzioni/provenienze già identificate come critiche
+  
+  // Punti deboli - dove ci sono molti esiti NEGATIVI (=, -)
   const puntiDeboli = {
     esitoNegativoPrevalente: trovaEsitoNegativoPrevalente(colpiGiocatore),
     zonaCritica: trovaCondizioneConPiuNegativi(colpiGiocatore, 'side'),
@@ -221,6 +212,24 @@ export function generaAnalisiCompleta(
     tipologiaCritica: trovaCondizioneConPiuNegativi(colpiGiocatore, 'serveTypology'),
     combinazionePeggiore: trovaCombinazioneConPiuNegativi(colpiGiocatore),
     caratteristicheNegativita: analizzaCaratteristicheNegativita(colpiGiocatore),
+  };
+
+  // FIX LOGICA MUTUA ESCLUSIONE: Escludi le zone critiche dai punti di forza
+  const zoneDaEscludere = puntiDeboli.zonaCritica ? [puntiDeboli.zonaCritica] : [];
+  const direzioniDaEscludere = puntiDeboli.direzioneCritica ? [puntiDeboli.direzioneCritica] : [];
+  const provenienzeDaEscludere = puntiDeboli.provenienzaCritica ? [puntiDeboli.provenienzaCritica] : [];
+
+  // Punti di forza - dove ci sono molti esiti POSITIVI (#, +)
+  // FIX: Esclude le zone/direzioni/provenienze già identificate come critiche
+  const puntiDiForza = {
+    migliorEsito: trovaMigliore(perEsito)?.nome || null,
+    migliorZona: trovaCondizioneConPiuPositivi(colpiGiocatore, 'side', zoneDaEscludere),
+    migliorDirezione: trovaCondizioneConPiuPositivi(colpiGiocatore, 'direction', direzioniDaEscludere),
+    migliorProvenienza: trovaCondizioneConPiuPositivi(colpiGiocatore, 'serveZone', provenienzeDaEscludere),
+    migliorVelocita: trovaCondizioneConPiuPositivi(colpiGiocatore, 'speedCategory'),
+    migliorTipologia: trovaCondizioneConPiuPositivi(colpiGiocatore, 'serveTypology'),
+    combinazioneMigliore: trovaCombinazioneConPiuPositivi(colpiGiocatore),
+    caratteristichePositivita: analizzaCaratteristichePositivita(colpiGiocatore),
   };
 
   // Sintesi
@@ -263,14 +272,18 @@ function trovaPeggiore(condizioni: AnalisiCondizione[]): AnalisiCondizione | nul
 /**
  * Trova la condizione con più esiti POSITIVI (#, +)
  * FIX: Restituisce null se non ci sono colpi positivi
+ * FIX MUTUA ESCLUSIONE: Accetta un parametro opzionale 'escludi' per escludere zone già critiche
  */
-function trovaCondizioneConPiuPositivi(colpi: Colpo[], chiave: keyof Colpo): string | null {
+function trovaCondizioneConPiuPositivi(colpi: Colpo[], chiave: keyof Colpo, escludi: string[] = []): string | null {
   const valori = [...new Set(colpi.map(c => c[chiave]).filter(v => v !== undefined && v !== 'non-specificata'))];
   
   let maxPositivi = 0;
   let condizioneMigliore: string | null = null;
   
   valori.forEach(valore => {
+    // FIX MUTUA ESCLUSIONE: Salta se il valore è nella lista da escludere
+    if (escludi.includes(String(valore))) return;
+    
     const colpiCondizione = colpi.filter(c => c[chiave] === valore);
     if (colpiCondizione.length < 3) return;
     
