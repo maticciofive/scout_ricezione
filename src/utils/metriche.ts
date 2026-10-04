@@ -43,22 +43,24 @@ export function calcolaER(colpi: Colpo[]): number {
 
 /**
  * Calcola la Percentuale Errori (PE)
- * PE = Errori / totale × 100
+ * FIX DISTINZIONE ESITI: PE conta SOLO '=' (errori diretti/ace subiti)
+ * PE = Solo Errori (=) / totale × 100
  */
 export function calcolaPE(colpi: Colpo[]): number {
   if (colpi.length === 0) return 0;
-  const errori = colpi.filter(c => c.outcome === '=').length;
+  const errori = colpi.filter(c => c.outcome === '=').length; // FIX DISTINZIONE ESITI: SOLO '='
   return (errori / colpi.length) * 100;
 }
 
 /**
  * Calcola la Percentuale Negativa (PN)
- * PN = (Negative + Slash) / totale × 100
+ * FIX DISTINZIONE ESITI: PN conta SOLO '-' (ricezioni negative ma giocabili)
+ * PN = Solo Negative (-) / totale × 100
  */
 export function calcolaPN(colpi: Colpo[]): number {
   if (colpi.length === 0) return 0;
-  const negativi = colpi.filter(c => c.outcome === '-' || c.outcome === '/').length;
-  return (negativi / colpi.length) * 100;
+  const negative = colpi.filter(c => c.outcome === '-').length; // FIX DISTINZIONE ESITI: SOLO '-'
+  return (negative / colpi.length) * 100;
 }
 
 /**
@@ -132,4 +134,41 @@ export function colorePerClassifica(classifica: string): string {
     case 'insufficiente': return '#dc2626';
     default: return '#6b7280';
   }
+}
+
+/**
+ * Valuta lo stato complessivo del giocatore
+ * FIX DISTINZIONE ESITI: Nuove soglie basate su PE (solo '=') e PN (solo '-')
+ * CRITICITÀ GRAVE (Rosso): PE ≥ 15% OPPURE ER < 30%
+ * ATTENZIONE (Giallo): PN ≥ 25% OPPURE PE tra 5% e 14%
+ * SICUREZZA (Verde): PP ≥ 60% E PE ≤ 5%
+ */
+export function valutaStato(pp: number, er: number, pe: number, pn: number): 'sicuro' | 'critico' | 'attenzione' | 'neutro' {
+  // FIX DISTINZIONE ESITI: Soglia critica abbassata per PE (solo '=')
+  if (pe >= 15 || er < 30) return 'critico';
+  // FIX DISTINZIONE ESITI: PN ora conta solo '-'
+  if (pn >= 25 || (pe >= 5 && pe < 15)) return 'attenzione';
+  if (pp >= 60 && pe <= 5) return 'sicuro';
+  return 'neutro';
+}
+
+/**
+ * FIX SPATIALE: Mappatura zona -> lato del corpo/campo
+ * Converte il nome della zona in lato per raccomandazioni precise
+ */
+export function getLatoDaZona(zona: string): string {
+  const zonaLower = zona.toLowerCase();
+  if (zonaLower.includes('destra') || zonaLower === 'destro') return 'destro';
+  if (zonaLower.includes('sinistra') || zonaLower === 'sinistro') return 'sinistro';
+  if (zonaLower.includes('centro') || zonaLower === 'centrale') return 'centrale';
+  return 'centrale'; // default
+}
+
+/**
+ * FIX SPATIALE: Restituisce il lato opposto (per correzione errori)
+ */
+export function getLatoOpposto(lato: string): string {
+  if (lato === 'destro') return 'sinistro';
+  if (lato === 'sinistro') return 'destro';
+  return 'centrale';
 }

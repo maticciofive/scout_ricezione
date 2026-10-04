@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { generaAnalisiCompleta, AnalisiGiocatore } from '../utils/analisi';
-import { emojiPerClassifica, colorePerClassifica } from '../utils/metriche';
+// FIX DISTINZIONE ESITI: Import di getLatoDaZona per precisione spaziale
+import { emojiPerClassifica, colorePerClassifica, getLatoDaZona } from '../utils/metriche';
 import { esportaResoconto } from '../utils/exportResoconto';
 import './ResocontoAnalisi.css';
 
@@ -110,9 +111,19 @@ export default function ResocontoAnalisi({ giocatori, colpi }: ResocontoAnalisiP
                       </div>
                       <span className="resoconto-stat-value">{analisi.metricheGlobali.er.toFixed(1)}%</span>
                     </div>
+                    {/* FIX DISTINZIONE ESITI: Mostra separatamente Errori (=) e Negative (-) */}
                     <div className="resoconto-stat-inline">
-                      <span>Errori: {analisi.metricheGlobali.pe.toFixed(1)}%</span>
-                      <span>Negativi: {analisi.metricheGlobali.pn.toFixed(1)}%</span>
+                      <span 
+                        style={{
+                          // FIX DISTINZIONE ESITI: Evidenzia in rosso PE ≥ 15%
+                          color: analisi.metricheGlobali.pe >= 15 ? '#dc2626' : 'inherit',
+                          fontWeight: analisi.metricheGlobali.pe >= 15 ? 700 : 400
+                        }}
+                      >
+                        Errori (=): {analisi.metricheGlobali.pe.toFixed(1)}%
+                        {analisi.metricheGlobali.pe >= 15 && ' ⚠️'}
+                      </span>
+                      <span>Negative (-): {analisi.metricheGlobali.pn.toFixed(1)}%</span>
                     </div>
                   </div>
 
@@ -205,13 +216,29 @@ export default function ResocontoAnalisi({ giocatori, colpi }: ResocontoAnalisiP
                             <strong>Caratteristiche negatività:</strong> {analisi.puntiDeboli.caratteristicheNegativita}
                           </li>
                         )}
-                        {analisi.puntiDeboli.esitoNegativoPrevalente && <li>Esito negativo prevalente: {analisi.puntiDeboli.esitoNegativoPrevalente}</li>}
-                        {analisi.puntiDeboli.zonaCritica && <li>Zona con più negatività: {analisi.puntiDeboli.zonaCritica}</li>}
-                        {analisi.puntiDeboli.direzioneCritica && <li>Direzione con più negatività: {analisi.puntiDeboli.direzioneCritica}</li>}
-                        {analisi.puntiDeboli.provenienzaCritica && <li>Provenienza con più negatività: {analisi.puntiDeboli.provenienzaCritica}</li>}
-                        {analisi.puntiDeboli.velocitaCritica && <li>Velocità con più negatività: {analisi.puntiDeboli.velocitaCritica}</li>}
-                        {analisi.puntiDeboli.tipologiaCritica && <li>Tipologia con più negatività: {analisi.puntiDeboli.tipologiaCritica}</li>}
-                        {analisi.puntiDeboli.combinazionePeggiore && <li>Combinazione con più negatività: {analisi.puntiDeboli.combinazionePeggiore}</li>}
+                        {analisi.puntiDeboli.esitoNegativoPrevalente && (
+                          <li>
+                            {/* FIX DISTINZIONE ESITI: Mostra separatamente Errori (=) e Negative (-) */}
+                            Esito negativo prevalente: <strong>{analisi.puntiDeboli.esitoNegativoPrevalente}</strong>
+                          </li>
+                        )}
+                        {analisi.puntiDeboli.zonaCritica && (
+                          <li style={{
+                            // FIX SPATIALE: Evidenzia in rosso se PE ≥ 15%
+                            backgroundColor: analisi.metricheGlobali.pe >= 15 ? '#fee2e2' : 'transparent',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontWeight: analisi.metricheGlobali.pe >= 15 ? 700 : 400
+                          }}>
+                            {/* FIX SPATIALE: Usa getLatoDaZona per precisione spaziale */}
+                            ⚠️ Zona {analisi.puntiDeboli.zonaCritica}: lavorare sul lato <strong>{getLatoDaZona(analisi.puntiDeboli.zonaCritica)}</strong>
+                          </li>
+                        )}
+                        {analisi.puntiDeboli.direzioneCritica && <li>Direzione critica: {analisi.puntiDeboli.direzioneCritica}</li>}
+                        {analisi.puntiDeboli.provenienzaCritica && <li>Provenienza critica: {analisi.puntiDeboli.provenienzaCritica}</li>}
+                        {analisi.puntiDeboli.velocitaCritica && <li>Velocità critica: {analisi.puntiDeboli.velocitaCritica}</li>}
+                        {analisi.puntiDeboli.tipologiaCritica && <li>Tipologia critica: {analisi.puntiDeboli.tipologiaCritica}</li>}
+                        {analisi.puntiDeboli.combinazionePeggiore && <li>Combinazione critica: {analisi.puntiDeboli.combinazionePeggiore}</li>}
                       </ul>
                     </div>
                   </div>

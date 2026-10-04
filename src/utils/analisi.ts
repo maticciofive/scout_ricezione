@@ -2,7 +2,8 @@
  * Analisi completa delle 7 dimensioni per ogni giocatore
  */
 
-import { Colpo, calcolaMetriche, calcolaMetrichePerCondizione, classificaPP, classificaER } from './metriche';
+// FIX DISTINZIONE ESITI: Import delle nuove funzioni per precisione spaziale e logica corretta
+import { Colpo, calcolaMetriche, calcolaMetrichePerCondizione, classificaPP, classificaER, valutaStato, getLatoDaZona } from './metriche';
 
 export interface AnalisiCondizione {
   nome: string;
@@ -281,26 +282,50 @@ function trovaCondizioneConPiuPositivi(colpi: Colpo[], chiave: keyof Colpo): str
 }
 
 /**
- * Trova la condizione con più esiti NEGATIVI (=, /, -)
+ * FIX DISTINZIONE ESITI: Trova la condizione con più ERRORI (=) e NEGATIVE (-)
+ * Ordina per PE (solo '=') decrescente, poi PN (solo '-') decrescente
  */
 function trovaCondizioneConPiuNegativi(colpi: Colpo[], chiave: keyof Colpo): string | null {
   const valori = [...new Set(colpi.map(c => c[chiave]).filter(v => v !== undefined && v !== 'non-specificata'))];
   
-  let maxNegativi = 0;
-  let condizionePeggiore: string | null = null;
+  interface CondizioneNegativa {
+    nome: string;
+    pe: number; // FIX DISTINZIONE ESITI: PE conta SOLO '='
+    pn: number; // FIX DISTINZIONE ESITI: PN conta SOLO '-'
+    totale: number;
+  }
+  
+  const condizioniNegative: CondizioneNegativa[] = [];
   
   valori.forEach(valore => {
     const colpiCondizione = colpi.filter(c => c[chiave] === valore);
     if (colpiCondizione.length < 3) return;
     
-    const negativi = colpiCondizione.filter(c => c.outcome === '=' || c.outcome === '/' || c.outcome === '-').length;
-    if (negativi > maxNegativi) {
-      maxNegativi = negativi;
-      condizionePeggiore = String(valore);
-    }
+    // FIX DISTINZIONE ESITI: Calcola PE e PN separatamente
+    const errori = colpiCondizione.filter(c => c.outcome === '=').length; // SOLO '='
+    const negative = colpiCondizione.filter(c => c.outcome === '-').length; // SOLO '-'
+    const totale = colpiCondizione.length;
+    
+    const pe = (errori / totale) * 100;
+    const pn = (negative / totale) * 100;
+    
+    condizioniNegative.push({
+      nome: String(valore),
+      pe,
+      pn,
+      totale,
+    });
   });
   
-  return condizionePeggiore;
+  if (condizioniNegative.length === 0) return null;
+  
+  // FIX DISTINZIONE ESITI: Ordina per PE decrescente, poi PN decrescente
+  condizioniNegative.sort((a, b) => {
+    if (b.pe !== a.pe) return b.pe - a.pe; // Prima per PE (errori '=')
+    return b.pn - a.pn; // Poi per PN (negative '-')
+  });
+  
+  return condizioniNegative[0].nome;
 }
 
 /**
@@ -543,14 +568,25 @@ function trovaCombinazionePeggiore(colpi: Colpo[]): string | null {
 
 function generaSintesi(
   nome: string,
-  metriche: { pp: number; er: number },
+  metriche: { pp: number; er: number; pe: number; pn: number },
   puntiDiForza: any,
   puntiDeboli: any
 ): string {
   const classER = classificaER(metriche.er);
   const giudizioER = classER === 'ottimo' ? 'Ottima' : classER === 'buono' ? 'Buona' : classER === 'migliorare' ? 'Da migliorare' : 'Insufficiente';
   
+  // FIX DISTINZIONE ESITI: Valuta lo stato con le nuove soglie
+  const stato = valutaStato(metriche.pp, metriche.er, metriche.pe, metriche.pn);
+  
   let sintesi = `${nome} ha un'efficienza del ${metriche.er.toFixed(0)}% (${giudizioER}). La percentuale positiva è del ${metriche.pp.toFixed(0)}%. `;
+  
+  // FIX DISTINZIONE ESITI: Mostra separatamente errori e negative
+  if (metriche.pe > 0) {
+    sintesi += `Errori diretti (Ace subiti): ${metriche.pe.toFixed(1)}%. `;
+  }
+  if (metriche.pn > 0) {
+    sintesi += `Ricezioni negative (giocabili ma difficili): ${metriche.pn.toFixed(1)}%. `;
+  }
   
   // Punti di forza basati sulle EVIDENZE POSITIVE
   if (puntiDiForza.caratteristichePositivita) {
@@ -559,25 +595,43 @@ function generaSintesi(
     sintesi += `Eccelle su ${puntiDiForza.combinazioneMigliore}. `;
   }
   
-  // Punti deboli basati sulle EVIDENZE NEGATIVE
-  if (puntiDeboli.caratteristicheNegativita) {
-    sintesi += `Ma ha difficoltà su ${puntiDeboli.caratteristicheNegativita}, dove si accumulano esiti negativi. `;
+  // FIX SPATIALE: Punti deboli basati sulle EVIDENZE NEGATIVE con precisione spaziale
+  if (puntiDeboli.zonaCritica) {
+    const latoCorretto = getLatoDaZona(puntiDeboli.zonaCritica); // FIX SPATIALE
+    sintesi += `Criticità in Zona ${puntiDeboli.zonaCritica}. `;
   } else if (puntiDeboli.combinazionePeggiore) {
-    sintesi += `Ma ha difficoltà su ${puntiDeboli.combinazionePeggiore}. `;
+    sintesi += `Difficoltà su ${puntiDeboli.combinazionePeggiore}. `;
   }
   
-  // Raccomandazione basata sulle criticità
-  if (puntiDeboli.caratteristicheNegativita || puntiDeboli.velocitaCritica || puntiDeboli.provenienzaCritica) {
-    sintesi += `RACCOMANDAZIONE: Concentrare gli allenamenti su `;
-    const parti = [];
-    if (puntiDeboli.velocitaCritica) parti.push(`battute ${puntiDeboli.velocitaCritica.toLowerCase()}`);
-    if (puntiDeboli.provenienzaCritica) parti.push(`dalla ${puntiDeboli.provenienzaCritica}`);
-    if (puntiDeboli.zonaCritica) parti.push(`verso il ${puntiDeboli.zonaCritica.toLowerCase()}`);
-    if (parti.length > 0) {
-      sintesi += parti.join(' ') + ', dove si concentrano le negatività.';
-    } else {
-      sintesi += 'le situazioni che generano più esiti negativi.';
+  // FIX SPATIALE: Raccomandazione con precisione spaziale assoluta
+  if (puntiDeboli.zonaCritica || puntiDeboli.velocitaCritica || puntiDeboli.provenienzaCritica) {
+    sintesi += `RACCOMANDAZIONE: `;
+    
+    // FIX SPATIALE: Se c'è una zona critica, usa getLatoDaZona per il lato corretto
+    if (puntiDeboli.zonaCritica) {
+      const latoCorretto = getLatoDaZona(puntiDeboli.zonaCritica);
+      sintesi += `L'atleta deve lavorare specificamente sul lato ${latoCorretto} del corpo`;
+      
+      // Aggiungi dettagli su errori vs negative
+      if (metriche.pe >= 15) {
+        sintesi += ` per ridurre gli errori diretti (Ace subiti)`;
+      } else if (metriche.pn >= 25) {
+        sintesi += ` per migliorare la stabilità su ricezioni difficili`;
+      }
+      
+      sintesi += `. `;
     }
+    
+    // Aggiungi dettagli su velocità e provenienza
+    const dettagli = [];
+    if (puntiDeboli.velocitaCritica) dettagli.push(`battute ${puntiDeboli.velocitaCritica.toLowerCase()}`);
+    if (puntiDeboli.provenienzaCritica) dettagli.push(`dalla ${puntiDeboli.provenienzaCritica}`);
+    
+    if (dettagli.length > 0) {
+      sintesi += `Focus su ${dettagli.join(' e ')}.`;
+    }
+  } else {
+    sintesi += `Continuare con gli allenamenti standard.`;
   }
   
   return sintesi;
