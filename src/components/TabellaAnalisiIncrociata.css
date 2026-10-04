@@ -1,0 +1,288 @@
+.tabella-incrociata-container {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: clamp(16px, 3vw, 24px);
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tabella-incrociata-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .tabella-incrociata-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.tabella-incrociata-titolo {
+  margin: 0;
+  color: #1e40af;
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+}
+
+.tabella-incrociata-filtro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tabella-incrociata-filtro label {
+  font-weight: 600;
+  color: #374151;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+}
+
+.tabella-incrociata-select {
+  padding: 8px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.tabella-incrociata-select:hover {
+  border-color: #3b82f6;
+}
+
+.tabella-incrociata-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Wrapper per scroll orizzontale su mobile */
+.tabella-incrociata-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+/* Tabella principale */
+.tabella-incrociata {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  min-width: 700px;
+}
+
+/* Header */
+.tabella-incrociata thead {
+  background: #0066cc;
+  color: white;
+}
+
+.tabella-incrociata thead th {
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #0052a3;
+}
+
+.tabella-incrociata thead .colonna-zona {
+  width: 100px;
+  position: sticky;
+  left: 0;
+  background: #0066cc;
+  z-index: 10;
+}
+
+.tabella-incrociata thead .colonna-tipologia {
+  width: 150px;
+}
+
+.tabella-incrociata thead .colonna-totale {
+  width: 60px;
+  font-weight: 700;
+}
+
+.tabella-incrociata thead .header-esiti {
+  background: #0052a3;
+}
+
+.tabella-incrociata thead .header-esito {
+  width: 70px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.tabella-incrociata thead .header-esito.perfetta {
+  background: #16a34a;
+}
+
+.tabella-incrociata thead .header-esito.positiva {
+  background: #22c55e;
+}
+
+.tabella-incrociata thead .header-esito.esclamativa {
+  background: #eab308;
+}
+
+.tabella-incrociata thead .header-esito.negativa {
+  background: #f97316;
+}
+
+.tabella-incrociata thead .header-esito.slash {
+  background: #6b7280;
+}
+
+.tabella-incrociata thead .header-esito.errore {
+  background: #dc2626;
+}
+
+/* Body */
+.tabella-incrociata tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+
+.tabella-incrociata tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.tabella-incrociata tbody td {
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+  text-align: center;
+  border: 1px solid #e5e7eb;
+}
+
+/* Colonne fisse su mobile */
+.tabella-incrociata tbody .cella-zona {
+  font-weight: 700;
+  background: #f3f4f6;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  color: #1e40af;
+}
+
+.tabella-incrociata tbody .cella-tipologia {
+  font-weight: 500;
+  text-align: left;
+  padding-left: 12px;
+}
+
+.tabella-incrociata tbody .cella-totale {
+  font-weight: 700;
+  background: #f9fafb;
+  color: #374151;
+}
+
+/* Celle con valori */
+.tabella-incrociata tbody .cella-perfetta {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.tabella-incrociata tbody .cella-positiva {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.tabella-incrociata tbody .cella-esclamativa {
+  color: #eab308;
+  font-weight: 600;
+}
+
+.tabella-incrociata tbody .cella-negativa {
+  color: #f97316;
+  font-weight: 600;
+}
+
+.tabella-incrociata tbody .cella-slash {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.tabella-incrociata tbody .cella-errore {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Evidenziazione critica per errore ≥ 15% */
+.tabella-incrociata tbody .cella-errore-critico {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+  font-weight: 700 !important;
+  border: 2px solid #dc2626 !important;
+}
+
+/* Evidenziazione riga positiva (somma ≥ 60%) */
+.tabella-incrociata tbody .riga-positiva {
+  background: #d1fae5 !important;
+}
+
+.tabella-incrociata tbody .riga-positiva:hover {
+  background: #a7f3d0 !important;
+}
+
+/* Cella vuota */
+.tabella-incrociata tbody .cella-vuota {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Legenda */
+.tabella-incrociata-legenda {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.legenda-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  color: #374151;
+}
+
+.legenda-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+}
+
+.legenda-color.cella-errore-critico {
+  background: #fee2e2;
+  border: 2px solid #dc2626;
+}
+
+.legenda-color.riga-positiva-sample {
+  background: #d1fae5;
+  border: 1px solid #16a34a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tabella-incrociata-container {
+    padding: 12px;
+  }
+  
+  .tabella-incrociata {
+    font-size: 0.85rem;
+  }
+  
+  .tabella-incrociata thead th,
+  .tabella-incrociata tbody td {
+    padding: 0.5rem;
+  }
+  
+  .tabella-incrociata thead .header-esito {
+    font-size: 1rem;
+  }
+}

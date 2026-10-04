@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ResocontoAnalisi from './components/ResocontoAnalisi'; // NUOVO
 import AnalisiMultipla from './components/AnalisiMultipla'; // NUOVO - Analisi multi-giornata
+import TabellaAnalisiIncrociata from './components/TabellaAnalisiIncrociata'; // NUOVO - Tabella pivot Zona × Tipologia
 
 interface Player {
   id: number;
@@ -1771,6 +1772,9 @@ export default function App() {
 
         {/* NUOVO: Resoconto Analisi Completa */}
         <ResocontoAnalisi giocatori={players} colpi={receptions} />
+
+        {/* NUOVO: Tabella Analisi Incrociata */}
+        <TabellaAnalisiIncrociata giocatori={players} colpi={receptions} />
 
         {/* NUOVO: Analisi Multi-Giornata */}
         <AnalisiMultipla />
