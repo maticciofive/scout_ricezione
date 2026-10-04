@@ -22,7 +22,7 @@ export interface DatiTabellaGiocatore {
 }
 
 const ZONE_RICEZIONE = ['Sinistra', 'Centro', 'Destra'];
-const TIPOLOGIE_BATTUTA = ['Flottante', 'Jump Top Spin', 'Jump Flottante', 'Non specificata'];
+const TIPOLOGIE_BATTUTA = ['Flottante', 'Jump Top Spin', 'Jump Flottante'];
 
 /**
  * Genera i dati aggregati per la tabella incrociata
@@ -50,8 +50,7 @@ export function generaDatiTabellaIncrociata(
         // Filtra i colpi per questa zona e tipologia
         const colpiFiltrati = colpiGiocatore.filter(c => {
           const matchZona = c.side === zona;
-          const matchTipologia = c.serveTypology === tipologia || 
-                                (tipologia === 'Non specificata' && (!c.serveTypology || c.serveTypology === 'Non specificata'));
+          const matchTipologia = c.serveTypology === tipologia;
           return matchZona && matchTipologia;
         });
         
@@ -116,8 +115,7 @@ export function generaDatiTabellaIncrociataTotale(
     TIPOLOGIE_BATTUTA.forEach(tipologia => {
       const colpiFiltrati = tuttiIColpi.filter(c => {
         const matchZona = c.side === zona;
-        const matchTipologia = c.serveTypology === tipologia || 
-                              (tipologia === 'Non specificata' && (!c.serveTypology || c.serveTypology === 'Non specificata'));
+        const matchTipologia = c.serveTypology === tipologia;
         return matchZona && matchTipologia;
       });
       
