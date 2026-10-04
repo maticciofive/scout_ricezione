@@ -3,7 +3,7 @@
  */
 
 // FIX DISTINZIONE ESITI: Import delle nuove funzioni per precisione spaziale e logica corretta
-import { Colpo, calcolaMetriche, calcolaMetrichePerCondizione, classificaPP, classificaER, valutaStato, getLatoDaZona } from './metriche';
+import { Colpo, calcolaMetriche, calcolaMetrichePerCondizione, classificaPP, classificaER, valutaStato, getLatoDaZona, calcolaDirezioneRelativa } from './metriche';
 
 export interface AnalisiCondizione {
   nome: string;
@@ -235,7 +235,7 @@ export function generaAnalisiCompleta(
   };
 
   // Sintesi
-  const sintesi = generaSintesi(giocatoreNome, metricheGlobali, puntiDiForza, puntiDeboli);
+  const sintesi = generaSintesi(giocatoreNome, metricheGlobali, puntiDiForza, puntiDeboli, colpiGiocatore);
 
   return {
     giocatoreIndex,
@@ -610,7 +610,8 @@ function generaSintesi(
   nome: string,
   metriche: { pp: number; er: number; pe: number; pn: number },
   puntiDiForza: any,
-  puntiDeboli: any
+  puntiDeboli: any,
+  colpiGiocatore: Colpo[]
 ): string {
   const classER = classificaER(metriche.er);
   const giudizioER = classER === 'ottimo' ? 'Ottima' : classER === 'buono' ? 'Buona' : classER === 'migliorare' ? 'Da migliorare' : 'Insufficiente';
@@ -637,8 +638,18 @@ function generaSintesi(
   
   // FIX SPATIALE: Punti deboli basati sulle EVIDENZE NEGATIVE con precisione spaziale
   if (puntiDeboli.zonaCritica) {
-    const latoCorretto = getLatoDaZona(puntiDeboli.zonaCritica); // FIX SPATIALE
-    sintesi += `Criticità in Zona ${puntiDeboli.zonaCritica}. `;
+    sintesi += `Criticità in Zona ${puntiDeboli.zonaCritica} del campo. `;
+    
+    // Aggiungi informazioni sulla provenienza della battuta e direzione relativa
+    if (puntiDeboli.provenienzaCritica && puntiDeboli.zonaCritica) {
+      // Estrai il numero di zona dalla stringa "Zona X"
+      const zonaBattutaMatch = puntiDeboli.provenienzaCritica.match(/Zona (\d+)/);
+      if (zonaBattutaMatch) {
+        const zonaBattuta = parseInt(zonaBattutaMatch[1]);
+        const direzioneRelativa = calcolaDirezioneRelativa(puntiDeboli.zonaCritica, zonaBattuta);
+        sintesi += `La palla arriva ${direzioneRelativa} (da ${puntiDeboli.provenienzaCritica}). `;
+      }
+    }
   } else if (puntiDeboli.combinazionePeggiore) {
     sintesi += `Difficoltà su ${puntiDeboli.combinazionePeggiore}. `;
   }
@@ -662,13 +673,11 @@ function generaSintesi(
       sintesi += `. `;
     }
     
-    // Aggiungi dettagli su velocità e provenienza
-    const dettagli = [];
-    if (puntiDeboli.velocitaCritica) dettagli.push(`battute ${puntiDeboli.velocitaCritica.toLowerCase()}`);
-    if (puntiDeboli.provenienzaCritica) dettagli.push(`dalla ${puntiDeboli.provenienzaCritica}`);
-    
-    if (dettagli.length > 0) {
-      sintesi += `Focus su ${dettagli.join(' e ')}.`;
+    // Aggiungi dettagli specifici sulla provenienza
+    if (puntiDeboli.provenienzaCritica) {
+      sintesi += `Focus sulla battuta dalla ${puntiDeboli.provenienzaCritica}.`;
+    } else if (puntiDeboli.velocitaCritica) {
+      sintesi += `Focus sulle battute ${puntiDeboli.velocitaCritica.toLowerCase()}.`;
     }
   } else {
     sintesi += `Continuare con gli allenamenti standard.`;
