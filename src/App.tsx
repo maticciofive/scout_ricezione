@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { SoglieProvider } from './context/SoglieContext'; // NUOVO - Provider soglie globali
+import { SoglieProvider, useSoglie } from './context/SoglieContext'; // NUOVO - Provider soglie globali
 import ConfigSoglieUI from './components/ConfigSoglieUI'; // NUOVO - Pannello configurazione soglie
+import { getStatoColore, getColoreCSS } from './utils/valutaColori'; // NUOVO - Valutazione colori con soglie globali
 import ResocontoAnalisi from './components/ResocontoAnalisi'; // NUOVO
 import AnalisiMultipla from './components/AnalisiMultipla'; // NUOVO - Analisi multi-giornata
 import TabellaAnalisiIncrociata from './components/TabellaAnalisiIncrociata'; // NUOVO - Tabella pivot Zona × Tipologia
@@ -103,6 +104,9 @@ const DEFAULT_PLAYERS: Player[] = [
 ];
 
 export default function App() {
+  // MODIFICATO PER SOGLIE GLOBALI - Usa il Context per accedere alle soglie globali
+  const { soglie } = useSoglie();
+  
   const [players, setPlayers] = useState<Player[]>(() => loadJSON<Player[]>('vb_players', DEFAULT_PLAYERS));
   const [receptions, setReceptions] = useState<Reception[]>(() => loadJSON<Reception[]>('vb_receptions', []));
   const [playerCount, setPlayerCount] = useState<number>(() => loadJSON<number>('vb_count', 3));
@@ -117,16 +121,11 @@ export default function App() {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1);
   const [showConfig, setShowConfig] = useState(false);
   const [tempCount, setTempCount] = useState(playerCount);
-  const [highlightMode, setHighlightMode] = useState<'none' | 'green' | 'orange' | 'red'>('none');
-  const [greenThreshold, setGreenThreshold] = useState<number>(() => loadJSON<number>('vb_green_threshold', 70));
-  const [orangeThreshold, setOrangeThreshold] = useState<number>(() => loadJSON<number>('vb_orange_threshold', 40));
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleString('it-IT'));
 
   useEffect(() => { saveJSON('vb_players', players); }, [players]);
   useEffect(() => { saveJSON('vb_receptions', receptions); }, [receptions]);
   useEffect(() => { saveJSON('vb_count', playerCount); }, [playerCount]);
-  useEffect(() => { saveJSON('vb_green_threshold', greenThreshold); }, [greenThreshold]);
-  useEffect(() => { saveJSON('vb_orange_threshold', orangeThreshold); }, [orangeThreshold]);
   
   // Aggiorna l'orario ogni secondo
   useEffect(() => {
@@ -584,15 +583,20 @@ export default function App() {
 
   const pct = (n: number, t: number) => t === 0 ? '–' : `${Math.round((n / t) * 100)}%`;
 
-  const getHighlightBg = (n: number, t: number): string => {
-    if (highlightMode === 'none' || t === 0) return 'transparent';
+  // MODIFICATO PER SOGLIE GLOBALI - Usa le soglie globali dal Context
+  const getHighlightBg = (n: number, t: number, tipo: 'positivo' | 'negativo' | 'errore' = 'positivo'): string => {
+    if (t === 0) return 'transparent';
     const percentage = (n / t) * 100;
-    
-    if (highlightMode === 'green' && percentage >= greenThreshold) return '#d1fae5'; // verde tenue
-    if (highlightMode === 'orange' && percentage >= orangeThreshold && percentage < greenThreshold) return '#fed7aa'; // arancione tenue
-    if (highlightMode === 'red' && percentage < orangeThreshold) return '#fecaca'; // rosso tenue
-    
-    return 'transparent';
+    const stato = getStatoColore(tipo, percentage, soglie);
+    return getColoreCSS(stato);
+  };
+
+  // MODIFICATO PER SOGLIE GLOBALI - Helper per determinare il tipo di esito
+  const getTipoEsito = (esito: string): 'positivo' | 'negativo' | 'errore' => {
+    if (esito === '#' || esito === '+') return 'positivo';
+    if (esito === '!' || esito === '-' || esito === '/') return 'negativo';
+    if (esito === '=') return 'errore';
+    return 'positivo'; // default
   };
 
   const getOutcomeStats = (filter: (r: Reception) => boolean) => {
@@ -657,11 +661,6 @@ export default function App() {
           📅 {currentTime}
         </p>
       </header>
-
-      {/* NUOVO - Pannello Configurazione Soglie Globali */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(8px, 2vw, 16px)' }}>
-        <ConfigSoglieUI />
-      </div>
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(8px, 2vw, 16px)' }}>
         <section style={cardStyle}>
@@ -1209,42 +1208,11 @@ export default function App() {
             <button onClick={exportExcel} disabled={receptions.length === 0} style={{ ...btnStyle('#2563eb'), opacity: receptions.length === 0 ? 0.4 : 1 }}>📈 Esporta Excel</button>
             <button onClick={handlePrint} style={btnStyle('#6b7280')}>🖨️ Stampa</button>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-            <span style={{ fontSize: '0.875rem', color: '#6b7280', alignSelf: 'center' }}>Evidenzia percentuali:</span>
-            <button onClick={() => setHighlightMode('none')} style={{ ...btnStyle('#9ca3af'), opacity: highlightMode === 'none' ? 1 : 0.5 }}>Nessuna</button>
-            <button onClick={() => setHighlightMode('green')} style={{ ...btnStyle('#86efac'), color: '#000', opacity: highlightMode === 'green' ? 1 : 0.5 }}>Verde (≥{greenThreshold}%)</button>
-            <button onClick={() => setHighlightMode('orange')} style={{ ...btnStyle('#fed7aa'), color: '#000', opacity: highlightMode === 'orange' ? 1 : 0.5 }}>Arancione ({orangeThreshold}-{greenThreshold - 1}%)</button>
-            <button onClick={() => setHighlightMode('red')} style={{ ...btnStyle('#fecaca'), color: '#000', opacity: highlightMode === 'red' ? 1 : 0.5 }}>Rosso (&lt;{orangeThreshold}%)</button>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '12px', padding: '12px', background: '#f9fafb', borderRadius: '8px' }}>
-            <span style={{ fontSize: '0.875rem', color: '#6b7280', alignSelf: 'center', fontWeight: 600 }}>Soglie personalizzate:</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', color: '#374151' }}>Soglia verde (≥):</label>
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={greenThreshold}
-                onChange={(e) => setGreenThreshold(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-                style={{ width: '60px', padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '0.875rem', textAlign: 'center' }}
-              />
-              <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>%</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', color: '#374151' }}>Soglia arancione (≥):</label>
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={orangeThreshold}
-                onChange={(e) => setOrangeThreshold(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-                style={{ width: '60px', padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '0.875rem', textAlign: 'center' }}
-              />
-              <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>%</span>
-            </div>
-          </div>
           <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#6b7280' }}>Ricezioni registrate: <strong>{receptions.length}</strong></p>
         </section>
+
+        {/* NUOVO - Pannello Configurazione Soglie Globali (Accordion) */}
+        <ConfigSoglieUI />
 
         {receptions.length > 0 && (
           <section style={cardStyle}>
@@ -1338,7 +1306,7 @@ export default function App() {
                       <td style={tdStyle}>{p.name}</td>
                       <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
                       {OUTCOMES.map(o => (
-                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(counts[o.key], total) }}>
+                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(counts[o.key], total, getTipoEsito(o.key)) }}>
                           <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
                           <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
                         </td>
@@ -1352,7 +1320,7 @@ export default function App() {
                   {OUTCOMES.map(o => {
                     const c = receptions.filter(r => r.outcome === o.key).length;
                     return (
-                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(c, receptions.length) }}>
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(c, receptions.length, getTipoEsito(o.key)) }}>
                         <div>{c}</div>
                         <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, receptions.length)}</div>
                       </td>

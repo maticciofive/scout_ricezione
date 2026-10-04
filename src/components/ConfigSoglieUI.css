@@ -11,6 +11,58 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.config-soglie-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.config-soglie-header-left {
+  flex: 1;
+  min-width: 200px;
+}
+
+.config-soglie-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.config-soglie-toggle-attivazione {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.config-soglie-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.config-soglie-accordion-btn {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 0.9rem;
+}
+
+.config-soglie-accordion-btn:hover {
+  background: #2563eb;
+}
+
 .config-soglie-titolo {
   margin: 0 0 8px 0;
   color: #1e40af;
@@ -18,7 +70,7 @@
 }
 
 .config-soglie-descrizione {
-  margin: 0 0 20px 0;
+  margin: 0;
   color: #6b7280;
   font-size: clamp(0.85rem, 2vw, 0.95rem);
 }
