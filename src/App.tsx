@@ -52,11 +52,11 @@ const DIRECTIONS = [
 
 const OUTCOMES = [
   { key: '#', label: 'Perfetta', bg: '#22c55e', fg: '#fff' },
-  { key: '+', label: 'Buona', bg: '#86efac', fg: '#000' },
-  { key: '!', label: 'Discreta', bg: '#facc15', fg: '#000' },
-  { key: '-', label: 'Debole', bg: '#fb923c', fg: '#fff' },
-  { key: '/', label: 'Errore', bg: '#ef4444', fg: '#fff' },
-  { key: '=', label: 'Annullata', bg: '#9ca3af', fg: '#fff' },
+  { key: '+', label: 'Positiva', bg: '#86efac', fg: '#000' },
+  { key: '!', label: 'Esclamativa', bg: '#facc15', fg: '#000' },
+  { key: '-', label: 'Negativa', bg: '#fb923c', fg: '#fff' },
+  { key: '/', label: 'Slash', bg: '#9ca3af', fg: '#fff' },
+  { key: '=', label: 'Errore', bg: '#ef4444', fg: '#fff' },
 ];
 
 const SIDES: Record<string, number[]> = {
