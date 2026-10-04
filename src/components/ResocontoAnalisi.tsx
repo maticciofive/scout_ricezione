@@ -28,8 +28,10 @@ interface ResocontoAnalisiProps {
 export default function ResocontoAnalisi({ giocatori, colpi }: ResocontoAnalisiProps) {
   const [mostraResoconto, setMostraResoconto] = useState(false);
 
-  const analisiList: AnalisiGiocatore[] = giocatori.map(g => 
-    generaAnalisiCompleta(g.id, g.name, colpi)
+  // FIX MAPPING ID: Usa l'indice dell'array, non l'ID del giocatore
+  // I colpi salvati hanno playerIndex (0, 1, 2...) non player.id (1, 2, 3...)
+  const analisiList: AnalisiGiocatore[] = giocatori.map((g, index) => 
+    generaAnalisiCompleta(index, g.name, colpi)
   );
 
   const handleEsporta = () => {
