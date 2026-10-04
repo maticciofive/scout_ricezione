@@ -289,7 +289,7 @@ export default function App() {
     csv += '=== RICAZIONI GREZZE ===\n';
     csv += ['Giocatore', 'Zona', 'Lato', 'Tipo Battuta', 'Zona Battuta', 'Fondamentale', 'Punto di ricezione', 'Esito', 'Velocità (km/h)', 'Data e ora'].join(';') + '\n';
     csv += receptions.map(r =>
-      [r.playerName, r.zone, r.side, serveTypeMap[r.serveType] || r.serveType, r.serveZone, fundMap[r.fundamental] || r.fundamental, dirMap[r.direction] || r.direction, r.outcome, r.speed !== null && r.speed !== undefined ? r.speed : '', r.timestamp].join(';')
+      [players[r.playerIndex]?.name || r.playerName, r.zone, r.side, serveTypeMap[r.serveType] || r.serveType, r.serveZone, fundMap[r.fundamental] || r.fundamental, dirMap[r.direction] || r.direction, r.outcome, r.speed !== null && r.speed !== undefined ? r.speed : '', r.timestamp].join(';')
     ).join('\n');
     
     // 2. Statistiche per esito (generale)
@@ -406,7 +406,7 @@ export default function App() {
     html += '<tr><th>Giocatore</th><th>Zona</th><th>Lato</th><th>Tipo Battuta</th><th>Zona Battuta</th><th>Fondamentale</th><th>Punto di ricezione</th><th>Esito</th><th>Velocità (km/h)</th><th>Data e ora</th></tr>';
     receptions.forEach(r => {
       html += '<tr>';
-      html += `<td>${r.playerName}</td>`;
+      html += `<td>${players[r.playerIndex]?.name || r.playerName}</td>`;
       html += `<td>${r.zone}</td>`;
       html += `<td>${r.side}</td>`;
       html += `<td>${serveTypeMap[r.serveType] || r.serveType}</td>`;
@@ -1269,7 +1269,7 @@ export default function App() {
                         <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700 }}>{receptions.length - idx}</td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>Z{r.serveZone}</td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>{serveTypeInfo?.emoji} {r.serveType}</td>
-                        <td style={tdStyle}>{r.playerName}</td>
+                        <td style={tdStyle}>{players[r.playerIndex]?.name || r.playerName}</td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>Z{r.zone}</td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>{fundInfo?.emoji} {r.fundamental}</td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>{dirInfo?.symbol}</td>
