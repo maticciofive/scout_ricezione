@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { SoglieConfig, caricaSoglie, salvaSoglie, resetSoglie, STORAGE_KEY } from '../utils/configSoglie';
+import { SoglieConfig, caricaSoglie, salvaSoglie, resetSoglie, STORAGE_KEY, SOGLIE_DEFAULT } from '../utils/configSoglie';
 
 interface SoglieContextType {
   soglie: SoglieConfig;
@@ -64,8 +64,15 @@ export function SoglieProvider({ children }: { children: ReactNode }) {
  */
 export function useSoglie() {
   const context = useContext(SoglieContext);
+  
+  // FIX TOLLERANZA PROVIDER: se il Provider non è presente, usa i default invece di crashare
   if (!context) {
-    throw new Error('useSoglie deve essere usato all\'interno di SoglieProvider');
+    return {
+      soglie: SOGLIE_DEFAULT,
+      aggiornaSoglie: () => console.warn('SoglieProvider non montato - modifica ignorata'),
+      resettaSoglie: () => console.warn('SoglieProvider non montato - reset ignorato'),
+    };
   }
+  
   return context;
 }
