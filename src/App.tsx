@@ -5,6 +5,7 @@ import { getStatoColore, getColoreCSS } from './utils/valutaColori'; // NUOVO - 
 import ResocontoAnalisi from './components/ResocontoAnalisi'; // NUOVO
 import AnalisiMultipla from './components/AnalisiMultipla'; // NUOVO - Analisi multi-giornata
 import TabellaAnalisiIncrociata from './components/TabellaAnalisiIncrociata'; // NUOVO - Tabella pivot Zona × Tipologia
+import TabellaDirezioneEsito from './components/TabellaDirezioneEsito'; // NUOVO - Tabella Direzione × Esito per Lato
 
 interface Player {
   id: number;
@@ -1751,6 +1752,9 @@ export default function App() {
 
         {/* NUOVO: Tabella Analisi Incrociata */}
         <TabellaAnalisiIncrociata giocatori={players} colpi={receptions} />
+
+        {/* NUOVO: Tabella Direzione × Esito per Lato */}
+        <TabellaDirezioneEsito giocatori={players} colpi={receptions} />
 
         {/* NUOVO: Analisi Multi-Giornata */}
         <AnalisiMultipla />
