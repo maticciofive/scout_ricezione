@@ -18,7 +18,6 @@ interface Reception {
   direction: string;
   outcome: string;
   speed: number | null;
-  speedCategory: string;
   timestamp: string;
 }
 
@@ -37,12 +36,6 @@ const SERVE_ZONES = [
   { zone: 1, label: 'Zona 1' },
   { zone: 6, label: 'Zona 6' },
   { zone: 5, label: 'Zona 5' },
-];
-
-const SPEED_CATEGORIES = [
-  { key: 'lenta', label: 'Lenta', emoji: '🐢' },
-  { key: 'media', label: 'Media', emoji: '🚶' },
-  { key: 'veloce', label: 'Veloce', emoji: '🏃' },
 ];
 
 const FUNDAMENTALS = [
@@ -106,14 +99,7 @@ const DEFAULT_PLAYERS: Player[] = [
 
 export default function App() {
   const [players, setPlayers] = useState<Player[]>(() => loadJSON<Player[]>('vb_players', DEFAULT_PLAYERS));
-  const [receptions, setReceptions] = useState<Reception[]>(() => {
-    const loaded = loadJSON<Reception[]>('vb_receptions', []);
-    // Migra dati esistenti aggiungendo speedCategory se non presente
-    return loaded.map(r => ({
-      ...r,
-      speedCategory: r.speedCategory || 'non-specificata'
-    }));
-  });
+  const [receptions, setReceptions] = useState<Reception[]>(() => loadJSON<Reception[]>('vb_receptions', []));
   const [playerCount, setPlayerCount] = useState<number>(() => loadJSON<number>('vb_count', 3));
   const [selectedPlayerIdx, setSelectedPlayerIdx] = useState<number | null>(null);
   const [selectedServeType, setSelectedServeType] = useState<string | null>(null);
@@ -130,7 +116,6 @@ export default function App() {
   const [greenThreshold, setGreenThreshold] = useState<number>(() => loadJSON<number>('vb_green_threshold', 70));
   const [orangeThreshold, setOrangeThreshold] = useState<number>(() => loadJSON<number>('vb_orange_threshold', 40));
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleString('it-IT'));
-  const [selectedSpeedCategory, setSelectedSpeedCategory] = useState<string>('non-specificata');
 
   useEffect(() => { saveJSON('vb_players', players); }, [players]);
   useEffect(() => { saveJSON('vb_receptions', receptions); }, [receptions]);
@@ -217,7 +202,6 @@ export default function App() {
       direction: selectedDir,
       outcome: selectedOutcome,
       speed: isNaN(speed as number) ? null : speed,
-      speedCategory: selectedSpeedCategory,
       timestamp: new Date().toLocaleString('it-IT'),
     };
     setReceptions(prev => [...prev, rec]);
@@ -229,7 +213,6 @@ export default function App() {
     setSelectedOutcome(null);
     setSelectedSpeed(null);
     setSpeedInput('');
-    setSelectedSpeedCategory('non-specificata');
     setStep(1);
   };
 
@@ -255,7 +238,6 @@ export default function App() {
     setSelectedOutcome(null);
     setSelectedSpeed(null);
     setSpeedInput('');
-    setSelectedSpeedCategory('non-specificata');
     setStep(1);
     localStorage.removeItem('vb_players');
     localStorage.removeItem('vb_receptions');
@@ -705,35 +687,6 @@ export default function App() {
                 >
                   <span style={{ fontSize: 'clamp(1.5rem, 6vw, 2rem)' }}>📍</span>
                   <span style={{ fontSize: 'clamp(0.875rem, 3vw, 1rem)', marginTop: '4px' }}>{sz.label}</span>
-                </button>
-              ))}
-            </div>
-            
-            <h3 style={{ textAlign: 'center', margin: '24px 0 12px', color: '#374151', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)' }}>Velocità della Battuta</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
-              {SPEED_CATEGORIES.map(cat => (
-                <button
-                  key={cat.key}
-                  onClick={() => setSelectedSpeedCategory(cat.key)}
-                  style={{
-                    width: 'clamp(90px, 25vw, 110px)',
-                    height: 'clamp(70px, 18vw, 85px)',
-                    borderRadius: '12px',
-                    background: selectedSpeedCategory === cat.key ? '#2563eb' : '#f3f4f6',
-                    color: selectedSpeedCategory === cat.key ? '#fff' : '#374151',
-                    border: selectedSpeedCategory === cat.key ? '3px solid #1d4ed8' : '2px solid #d1d5db',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  <span style={{ fontSize: 'clamp(1.5rem, 6vw, 2rem)' }}>{cat.emoji}</span>
-                  <span style={{ fontSize: 'clamp(0.875rem, 3vw, 1rem)', marginTop: '4px' }}>{cat.label}</span>
                 </button>
               ))}
             </div>
