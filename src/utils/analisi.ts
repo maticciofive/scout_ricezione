@@ -260,6 +260,7 @@ function trovaPeggiore(condizioni: AnalisiCondizione[]): AnalisiCondizione | nul
 
 /**
  * Trova la condizione con più esiti POSITIVI (#, +)
+ * FIX: Restituisce null se non ci sono colpi positivi
  */
 function trovaCondizioneConPiuPositivi(colpi: Colpo[], chiave: keyof Colpo): string | null {
   const valori = [...new Set(colpi.map(c => c[chiave]).filter(v => v !== undefined && v !== 'non-specificata'))];
@@ -272,7 +273,8 @@ function trovaCondizioneConPiuPositivi(colpi: Colpo[], chiave: keyof Colpo): str
     if (colpiCondizione.length < 3) return;
     
     const positivi = colpiCondizione.filter(c => c.outcome === '#' || c.outcome === '+').length;
-    if (positivi > maxPositivi) {
+    // FIX: Aggiorna solo se ci sono effettivamente colpi positivi
+    if (positivi > maxPositivi && positivi > 0) {
       maxPositivi = positivi;
       condizioneMigliore = String(valore);
     }
@@ -283,7 +285,7 @@ function trovaCondizioneConPiuPositivi(colpi: Colpo[], chiave: keyof Colpo): str
 
 /**
  * FIX DISTINZIONE ESITI: Trova la condizione con più ERRORI (=) e NEGATIVE (-)
- * Ordina per PE (solo '=') decrescente, poi PN (solo '-') decrescente
+ * Ordina per numero totale di colpi negativi (errori + negative) decrescente
  */
 function trovaCondizioneConPiuNegativi(colpi: Colpo[], chiave: keyof Colpo): string | null {
   const valori = [...new Set(colpi.map(c => c[chiave]).filter(v => v !== undefined && v !== 'non-specificata'))];
@@ -292,6 +294,7 @@ function trovaCondizioneConPiuNegativi(colpi: Colpo[], chiave: keyof Colpo): str
     nome: string;
     pe: number; // FIX DISTINZIONE ESITI: PE conta SOLO '='
     pn: number; // FIX DISTINZIONE ESITI: PN conta SOLO '-'
+    totaleNegativi: number; // Totale colpi negativi (errori + negative)
     totale: number;
   }
   
@@ -305,6 +308,10 @@ function trovaCondizioneConPiuNegativi(colpi: Colpo[], chiave: keyof Colpo): str
     const errori = colpiCondizione.filter(c => c.outcome === '=').length; // SOLO '='
     const negative = colpiCondizione.filter(c => c.outcome === '-').length; // SOLO '-'
     const totale = colpiCondizione.length;
+    const totaleNegativi = errori + negative;
+    
+    // FIX: Ignora se non ci sono colpi negativi
+    if (totaleNegativi === 0) return;
     
     const pe = (errori / totale) * 100;
     const pn = (negative / totale) * 100;
@@ -313,16 +320,19 @@ function trovaCondizioneConPiuNegativi(colpi: Colpo[], chiave: keyof Colpo): str
       nome: String(valore),
       pe,
       pn,
+      totaleNegativi,
       totale,
     });
   });
   
   if (condizioniNegative.length === 0) return null;
   
-  // FIX DISTINZIONE ESITI: Ordina per PE decrescente, poi PN decrescente
+  // FIX: Ordina per numero totale di colpi negativi decrescente
+  // Poi per PN decrescente (negative), poi per PE decrescente (errori)
   condizioniNegative.sort((a, b) => {
-    if (b.pe !== a.pe) return b.pe - a.pe; // Prima per PE (errori '=')
-    return b.pn - a.pn; // Poi per PN (negative '-')
+    if (b.totaleNegativi !== a.totaleNegativi) return b.totaleNegativi - a.totaleNegativi;
+    if (b.pn !== a.pn) return b.pn - a.pn;
+    return b.pe - a.pe;
   });
   
   return condizioniNegative[0].nome;
@@ -445,17 +455,19 @@ function analizzaCaratteristichePositivita(colpi: Colpo[]): string {
 }
 
 /**
- * Analizza le caratteristiche delle negatività
+ * FIX DISTINZIONE ESITI: Analizza le caratteristiche delle NEGATIVE (-)
+ * Conta SOLO '-' (ricezioni negative ma giocabili), NON include '=' o '/'
  */
 function analizzaCaratteristicheNegativita(colpi: Colpo[]): string {
-  const negativi = colpi.filter(c => c.outcome === '=' || c.outcome === '/' || c.outcome === '-');
-  if (negativi.length === 0) return '';
+  // FIX DISTINZIONE ESITI: Conta SOLO '-' (negative)
+  const negative = colpi.filter(c => c.outcome === '-'); // SOLO '-'
+  if (negative.length === 0) return '';
   
   const caratteristiche: string[] = [];
   
-  // Velocità più frequente nei negativi
+  // Velocità più frequente nelle negative
   const velocitaCount: Record<string, number> = {};
-  negativi.forEach(c => {
+  negative.forEach(c => {
     if (c.speedCategory && c.speedCategory !== 'non-specificata') {
       velocitaCount[c.speedCategory] = (velocitaCount[c.speedCategory] || 0) + 1;
     }
@@ -465,9 +477,9 @@ function analizzaCaratteristicheNegativita(colpi: Colpo[]): string {
     caratteristiche.push(`battute ${velocitaPiuFrequente[0].toLowerCase()}`);
   }
   
-  // Provenienza più frequente nei negativi
+  // Provenienza più frequente nelle negative
   const provCount: Record<number, number> = {};
-  negativi.forEach(c => {
+  negative.forEach(c => {
     if (c.serveZone) {
       provCount[c.serveZone] = (provCount[c.serveZone] || 0) + 1;
     }
@@ -477,9 +489,9 @@ function analizzaCaratteristicheNegativita(colpi: Colpo[]): string {
     caratteristiche.push(`dalla zona ${provPiuFrequente[0]}`);
   }
   
-  // Zona di campo più frequente nei negativi
+  // Zona di campo più frequente nelle negative
   const zonaCount: Record<string, number> = {};
-  negativi.forEach(c => {
+  negative.forEach(c => {
     if (c.side) {
       zonaCount[c.side] = (zonaCount[c.side] || 0) + 1;
     }
@@ -492,16 +504,21 @@ function analizzaCaratteristicheNegativita(colpi: Colpo[]): string {
   return caratteristiche.join(' ');
 }
 
+/**
+ * FIX DISTINZIONE ESITI: Trova l'esito negativo prevalente
+ * Distingue tra Errori (=), Slash (/), e Negative (-)
+ */
 function trovaEsitoNegativoPrevalente(colpi: Colpo[]): string | null {
-  const errori = colpi.filter(c => c.outcome === '=').length;
-  const slash = colpi.filter(c => c.outcome === '/').length;
-  const negativi = colpi.filter(c => c.outcome === '-').length;
+  const errori = colpi.filter(c => c.outcome === '=').length; // SOLO '='
+  const slash = colpi.filter(c => c.outcome === '/').length; // SOLO '/'
+  const negative = colpi.filter(c => c.outcome === '-').length; // SOLO '-'
   
-  if (errori === 0 && slash === 0 && negativi === 0) return null;
+  if (errori === 0 && slash === 0 && negative === 0) return null;
   
-  if (errori >= slash && errori >= negativi) return 'Errore';
-  if (slash >= errori && slash >= negativi) return 'Slash';
-  return 'Negativa';
+  // FIX DISTINZIONE ESITI: Restituisce l'esito più frequente
+  if (errori >= slash && errori >= negative) return 'Errore (=)';
+  if (slash >= errori && slash >= negative) return 'Slash (/)';
+  return 'Negativa (-)';
 }
 
 function trovaCombinazioneMigliore(colpi: Colpo[]): string | null {
