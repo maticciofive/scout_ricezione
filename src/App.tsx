@@ -113,10 +113,14 @@ export default function App() {
   const [showConfig, setShowConfig] = useState(false);
   const [tempCount, setTempCount] = useState(playerCount);
   const [highlightMode, setHighlightMode] = useState<'none' | 'green' | 'orange' | 'red'>('none');
+  const [greenThreshold, setGreenThreshold] = useState<number>(() => loadJSON<number>('vb_green_threshold', 70));
+  const [orangeThreshold, setOrangeThreshold] = useState<number>(() => loadJSON<number>('vb_orange_threshold', 40));
 
   useEffect(() => { saveJSON('vb_players', players); }, [players]);
   useEffect(() => { saveJSON('vb_receptions', receptions); }, [receptions]);
   useEffect(() => { saveJSON('vb_count', playerCount); }, [playerCount]);
+  useEffect(() => { saveJSON('vb_green_threshold', greenThreshold); }, [greenThreshold]);
+  useEffect(() => { saveJSON('vb_orange_threshold', orangeThreshold); }, [orangeThreshold]);
 
   const applyCount = () => {
     const c = Math.max(2, Math.min(6, tempCount));
@@ -238,16 +242,110 @@ export default function App() {
     FUNDAMENTALS.forEach(f => { fundMap[f.key] = f.label; });
     const serveTypeMap: Record<string, string> = {};
     SERVE_TYPES.forEach(s => { serveTypeMap[s.key] = s.label; });
-    const headers = ['Giocatore', 'Zona', 'Lato', 'Tipo Battuta', 'Zona Battuta', 'Fondamentale', 'Punto di ricezione', 'Esito', 'Velocità (km/h)', 'Data e ora'];
-    const rows = receptions.map(r =>
-      [r.playerName, r.zone, r.side, serveTypeMap[r.serveType] || r.serveType, r.serveZone, fundMap[r.fundamental] || r.fundamental, dirMap[r.direction] || r.direction, r.outcome, r.speed !== null ? r.speed : '', r.timestamp].join(';')
-    );
-    const csv = '\uFEFF' + [headers.join(';'), ...rows].join('\n');
+    
+    let csv = '\uFEFF';
+    
+    // 1. Ricezioni grezze
+    csv += '=== RICAZIONI GREZZE ===\n';
+    csv += ['Giocatore', 'Zona', 'Lato', 'Tipo Battuta', 'Zona Battuta', 'Fondamentale', 'Punto di ricezione', 'Esito', 'Velocità (km/h)', 'Data e ora'].join(';') + '\n';
+    csv += receptions.map(r =>
+      [r.playerName, r.zone, r.side, serveTypeMap[r.serveType] || r.serveType, r.serveZone, fundMap[r.fundamental] || r.fundamental, dirMap[r.direction] || r.direction, r.outcome, r.speed !== null && r.speed !== undefined ? r.speed : '', r.timestamp].join(';')
+    ).join('\n');
+    
+    // 2. Statistiche per esito (generale)
+    csv += '\n\n=== STATISTICHE PER ESITO ===\n';
+    csv += ['Giocatore', 'Totale', ...OUTCOMES.map(o => `${o.key} (${o.label})`), ...OUTCOMES.map(o => `${o.key} %`)].join(';') + '\n';
+    players.forEach((p, idx) => {
+      const { total, counts } = getOutcomeStats(r => r.playerIndex === idx);
+      csv += [p.name, total, ...OUTCOMES.map(o => counts[o.key]), ...OUTCOMES.map(o => pct(counts[o.key], total))].join(';') + '\n';
+    });
+    csv += ['SQUADRA', receptions.length, ...OUTCOMES.map(o => receptions.filter(r => r.outcome === o.key).length), ...OUTCOMES.map(o => pct(receptions.filter(r => r.outcome === o.key).length, receptions.length))].join(';') + '\n';
+    
+    // 3. Statistiche per esito - BAGHER
+    csv += '\n\n=== STATISTICHE PER ESITO - BAGHER ===\n';
+    csv += ['Giocatore', 'Totale', ...OUTCOMES.map(o => `${o.key} (${o.label})`), ...OUTCOMES.map(o => `${o.key} %`)].join(';') + '\n';
+    players.forEach((p, idx) => {
+      const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.fundamental === 'B');
+      csv += [p.name, total, ...OUTCOMES.map(o => counts[o.key]), ...OUTCOMES.map(o => pct(counts[o.key], total))].join(';') + '\n';
+    });
+    const totalB = receptions.filter(r => r.fundamental === 'B').length;
+    csv += ['SQUADRA', totalB, ...OUTCOMES.map(o => receptions.filter(r => r.outcome === o.key && r.fundamental === 'B').length), ...OUTCOMES.map(o => pct(receptions.filter(r => r.outcome === o.key && r.fundamental === 'B').length, totalB))].join(';') + '\n';
+    
+    // 4. Statistiche per esito - PALLEGGIO
+    csv += '\n\n=== STATISTICHE PER ESITO - PALLEGGIO ===\n';
+    csv += ['Giocatore', 'Totale', ...OUTCOMES.map(o => `${o.key} (${o.label})`), ...OUTCOMES.map(o => `${o.key} %`)].join(';') + '\n';
+    players.forEach((p, idx) => {
+      const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.fundamental === 'P');
+      csv += [p.name, total, ...OUTCOMES.map(o => counts[o.key]), ...OUTCOMES.map(o => pct(counts[o.key], total))].join(';') + '\n';
+    });
+    const totalP = receptions.filter(r => r.fundamental === 'P').length;
+    csv += ['SQUADRA', totalP, ...OUTCOMES.map(o => receptions.filter(r => r.outcome === o.key && r.fundamental === 'P').length), ...OUTCOMES.map(o => pct(receptions.filter(r => r.outcome === o.key && r.fundamental === 'P').length, totalP))].join(';') + '\n';
+    
+    // 5. Punto di ricezione per lato (generale)
+    csv += '\n\n=== PUNTO DI RICEZIONE PER LATO ===\n';
+    csv += ['Giocatore', 'Sinistra-▲', 'Sinistra-◀', 'Sinistra-●', 'Sinistra-▶', 'Sinistra-▼', 'Centro-▲', 'Centro-◀', 'Centro-●', 'Centro-▶', 'Centro-▼', 'Destra-▲', 'Destra-◀', 'Destra-●', 'Destra-▶', 'Destra-▼'].join(';') + '\n';
+    players.forEach((p, idx) => {
+      const row = [p.name];
+      (['Sinistra', 'Centro', 'Destra'] as const).forEach(side => {
+        const { total, counts } = getDirectionStats(idx, side);
+        DIRECTIONS.forEach(d => {
+          row.push(`${counts[d.key]} (${pct(counts[d.key], total)})`);
+        });
+      });
+      csv += row.join(';') + '\n';
+    });
+    const teamRow = ['SQUADRA'];
+    (['Sinistra', 'Centro', 'Destra'] as const).forEach(side => {
+      const { total, counts } = getDirectionStats(null, side);
+      DIRECTIONS.forEach(d => {
+        teamRow.push(`${counts[d.key]} (${pct(counts[d.key], total)})`);
+      });
+    });
+    csv += teamRow.join(';') + '\n';
+    
+    // 6. Statistiche per tipo di battuta
+    csv += '\n\n=== STATISTICHE PER TIPO DI BATTUTA ===\n';
+    csv += ['Giocatore', 'Tipo Battuta', 'Totale', ...OUTCOMES.map(o => `${o.key} (${o.label})`), ...OUTCOMES.map(o => `${o.key} %`)].join(';') + '\n';
+    players.forEach((p, idx) => {
+      SERVE_TYPES.forEach(s => {
+        const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.serveType === s.key);
+        if (total > 0) {
+          csv += [p.name, `${s.label} (${s.key})`, total, ...OUTCOMES.map(o => counts[o.key]), ...OUTCOMES.map(o => pct(counts[o.key], total))].join(';') + '\n';
+        }
+      });
+    });
+    
+    // 7. Statistiche per zona di provenienza
+    csv += '\n\n=== STATISTICHE PER ZONA DI PROVENIENZA ===\n';
+    csv += ['Giocatore', 'Zona Battuta', 'Totale', ...OUTCOMES.map(o => `${o.key} (${o.label})`), ...OUTCOMES.map(o => `${o.key} %`)].join(';') + '\n';
+    players.forEach((p, idx) => {
+      SERVE_ZONES.forEach(sz => {
+        const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.serveZone === sz.zone);
+        if (total > 0) {
+          csv += [p.name, sz.label, total, ...OUTCOMES.map(o => counts[o.key]), ...OUTCOMES.map(o => pct(counts[o.key], total))].join(';') + '\n';
+        }
+      });
+    });
+    
+    // 8. Distribuzione tipo battuta x zona provenienza
+    csv += '\n\n=== DISTRIBUZIONE TIPO BATTUTA x ZONA PROVENIENZA ===\n';
+    csv += ['Tipo Battuta', ...SERVE_ZONES.map(sz => sz.label), 'Totale'].join(';') + '\n';
+    SERVE_TYPES.forEach(s => {
+      const row = [`${s.label} (${s.key})`];
+      SERVE_ZONES.forEach(sz => {
+        const count = receptions.filter(r => r.serveType === s.key && r.serveZone === sz.zone).length;
+        const total = receptions.filter(r => r.serveType === s.key).length;
+        row.push(`${count} (${pct(count, total)})`);
+      });
+      row.push(receptions.filter(r => r.serveType === s.key).length.toString());
+      csv += row.join(';') + '\n';
+    });
+    
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `ricezioni_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `ricezioni_complete_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -261,9 +359,11 @@ export default function App() {
     SERVE_TYPES.forEach(s => { serveTypeMap[s.key] = s.label; });
     
     let html = '<html><head><meta charset="utf-8"><title>Scouting Ricezione</title></head><body>';
+    
+    // 1. Ricezioni grezze
+    html += '<h2>Ricezioni Grezze</h2>';
     html += '<table border="1" style="border-collapse:collapse;">';
     html += '<tr><th>Giocatore</th><th>Zona</th><th>Lato</th><th>Tipo Battuta</th><th>Zona Battuta</th><th>Fondamentale</th><th>Punto di ricezione</th><th>Esito</th><th>Velocità (km/h)</th><th>Data e ora</th></tr>';
-    
     receptions.forEach(r => {
       html += '<tr>';
       html += `<td>${r.playerName}</td>`;
@@ -278,14 +378,160 @@ export default function App() {
       html += `<td>${r.timestamp}</td>`;
       html += '</tr>';
     });
+    html += '</table>';
     
-    html += '</table></body></html>';
+    // 2. Statistiche per esito (generale)
+    html += '<h2>Statistiche per Esito</h2>';
+    html += '<table border="1" style="border-collapse:collapse;">';
+    html += '<tr><th>Giocatore</th><th>Totale</th>' + OUTCOMES.map(o => `<th>${o.key} (${o.label})</th>`).join('') + OUTCOMES.map(o => `<th>${o.key} %</th>`).join('') + '</tr>';
+    players.forEach((p, idx) => {
+      const { total, counts } = getOutcomeStats(r => r.playerIndex === idx);
+      html += '<tr>';
+      html += `<td>${p.name}</td>`;
+      html += `<td>${total}</td>`;
+      OUTCOMES.forEach(o => { html += `<td>${counts[o.key]}</td>`; });
+      OUTCOMES.forEach(o => { html += `<td>${pct(counts[o.key], total)}</td>`; });
+      html += '</tr>';
+    });
+    html += '<tr><td><b>SQUADRA</b></td>';
+    html += `<td><b>${receptions.length}</b></td>`;
+    OUTCOMES.forEach(o => { html += `<td><b>${receptions.filter(r => r.outcome === o.key).length}</b></td>`; });
+    OUTCOMES.forEach(o => { html += `<td><b>${pct(receptions.filter(r => r.outcome === o.key).length, receptions.length)}</b></td>`; });
+    html += '</tr></table>';
+    
+    // 3. Statistiche per esito - BAGHER
+    html += '<h2>Statistiche per Esito - BAGHER</h2>';
+    html += '<table border="1" style="border-collapse:collapse;">';
+    html += '<tr><th>Giocatore</th><th>Totale</th>' + OUTCOMES.map(o => `<th>${o.key} (${o.label})</th>`).join('') + OUTCOMES.map(o => `<th>${o.key} %</th>`).join('') + '</tr>';
+    players.forEach((p, idx) => {
+      const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.fundamental === 'B');
+      html += '<tr>';
+      html += `<td>${p.name}</td>`;
+      html += `<td>${total}</td>`;
+      OUTCOMES.forEach(o => { html += `<td>${counts[o.key]}</td>`; });
+      OUTCOMES.forEach(o => { html += `<td>${pct(counts[o.key], total)}</td>`; });
+      html += '</tr>';
+    });
+    const totalB = receptions.filter(r => r.fundamental === 'B').length;
+    html += '<tr><td><b>SQUADRA</b></td>';
+    html += `<td><b>${totalB}</b></td>`;
+    OUTCOMES.forEach(o => { html += `<td><b>${receptions.filter(r => r.outcome === o.key && r.fundamental === 'B').length}</b></td>`; });
+    OUTCOMES.forEach(o => { html += `<td><b>${pct(receptions.filter(r => r.outcome === o.key && r.fundamental === 'B').length, totalB)}</b></td>`; });
+    html += '</tr></table>';
+    
+    // 4. Statistiche per esito - PALLEGGIO
+    html += '<h2>Statistiche per Esito - PALLEGGIO</h2>';
+    html += '<table border="1" style="border-collapse:collapse;">';
+    html += '<tr><th>Giocatore</th><th>Totale</th>' + OUTCOMES.map(o => `<th>${o.key} (${o.label})</th>`).join('') + OUTCOMES.map(o => `<th>${o.key} %</th>`).join('') + '</tr>';
+    players.forEach((p, idx) => {
+      const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.fundamental === 'P');
+      html += '<tr>';
+      html += `<td>${p.name}</td>`;
+      html += `<td>${total}</td>`;
+      OUTCOMES.forEach(o => { html += `<td>${counts[o.key]}</td>`; });
+      OUTCOMES.forEach(o => { html += `<td>${pct(counts[o.key], total)}</td>`; });
+      html += '</tr>';
+    });
+    const totalP = receptions.filter(r => r.fundamental === 'P').length;
+    html += '<tr><td><b>SQUADRA</b></td>';
+    html += `<td><b>${totalP}</b></td>`;
+    OUTCOMES.forEach(o => { html += `<td><b>${receptions.filter(r => r.outcome === o.key && r.fundamental === 'P').length}</b></td>`; });
+    OUTCOMES.forEach(o => { html += `<td><b>${pct(receptions.filter(r => r.outcome === o.key && r.fundamental === 'P').length, totalP)}</b></td>`; });
+    html += '</tr></table>';
+    
+    // 5. Punto di ricezione per lato (generale)
+    html += '<h2>Punto di Ricezione per Lato</h2>';
+    html += '<table border="1" style="border-collapse:collapse;">';
+    html += '<tr><th>Giocatore</th>';
+    (['Sinistra', 'Centro', 'Destra'] as const).forEach(side => {
+      DIRECTIONS.forEach(d => {
+        html += `<th>${side}-${d.symbol}</th>`;
+      });
+    });
+    html += '</tr>';
+    players.forEach((p, idx) => {
+      html += `<tr><td>${p.name}</td>`;
+      (['Sinistra', 'Centro', 'Destra'] as const).forEach(side => {
+        const { total, counts } = getDirectionStats(idx, side);
+        DIRECTIONS.forEach(d => {
+          html += `<td>${counts[d.key]} (${pct(counts[d.key], total)})</td>`;
+        });
+      });
+      html += '</tr>';
+    });
+    html += '<tr><td><b>SQUADRA</b></td>';
+    (['Sinistra', 'Centro', 'Destra'] as const).forEach(side => {
+      const { total, counts } = getDirectionStats(null, side);
+      DIRECTIONS.forEach(d => {
+        html += `<td><b>${counts[d.key]} (${pct(counts[d.key], total)})</b></td>`;
+      });
+    });
+    html += '</tr></table>';
+    
+    // 6. Statistiche per tipo di battuta
+    html += '<h2>Statistiche per Tipo di Battuta</h2>';
+    html += '<table border="1" style="border-collapse:collapse;">';
+    html += '<tr><th>Giocatore</th><th>Tipo Battuta</th><th>Totale</th>' + OUTCOMES.map(o => `<th>${o.key} (${o.label})</th>`).join('') + OUTCOMES.map(o => `<th>${o.key} %</th>`).join('') + '</tr>';
+    players.forEach((p, idx) => {
+      SERVE_TYPES.forEach(s => {
+        const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.serveType === s.key);
+        if (total > 0) {
+          html += '<tr>';
+          html += `<td>${p.name}</td>`;
+          html += `<td>${s.label} (${s.key})</td>`;
+          html += `<td>${total}</td>`;
+          OUTCOMES.forEach(o => { html += `<td>${counts[o.key]}</td>`; });
+          OUTCOMES.forEach(o => { html += `<td>${pct(counts[o.key], total)}</td>`; });
+          html += '</tr>';
+        }
+      });
+    });
+    html += '</table>';
+    
+    // 7. Statistiche per zona di provenienza
+    html += '<h2>Statistiche per Zona di Provenienza</h2>';
+    html += '<table border="1" style="border-collapse:collapse;">';
+    html += '<tr><th>Giocatore</th><th>Zona Battuta</th><th>Totale</th>' + OUTCOMES.map(o => `<th>${o.key} (${o.label})</th>`).join('') + OUTCOMES.map(o => `<th>${o.key} %</th>`).join('') + '</tr>';
+    players.forEach((p, idx) => {
+      SERVE_ZONES.forEach(sz => {
+        const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.serveZone === sz.zone);
+        if (total > 0) {
+          html += '<tr>';
+          html += `<td>${p.name}</td>`;
+          html += `<td>${sz.label}</td>`;
+          html += `<td>${total}</td>`;
+          OUTCOMES.forEach(o => { html += `<td>${counts[o.key]}</td>`; });
+          OUTCOMES.forEach(o => { html += `<td>${pct(counts[o.key], total)}</td>`; });
+          html += '</tr>';
+        }
+      });
+    });
+    html += '</table>';
+    
+    // 8. Distribuzione tipo battuta x zona provenienza
+    html += '<h2>Distribuzione Tipo Battuta x Zona Provenienza</h2>';
+    html += '<table border="1" style="border-collapse:collapse;">';
+    html += '<tr><th>Tipo Battuta</th>' + SERVE_ZONES.map(sz => `<th>${sz.label}</th>`).join('') + '<th>Totale</th></tr>';
+    SERVE_TYPES.forEach(s => {
+      html += '<tr>';
+      html += `<td>${s.label} (${s.key})</td>`;
+      SERVE_ZONES.forEach(sz => {
+        const count = receptions.filter(r => r.serveType === s.key && r.serveZone === sz.zone).length;
+        const total = receptions.filter(r => r.serveType === s.key).length;
+        html += `<td>${count} (${pct(count, total)})</td>`;
+      });
+      html += `<td><b>${receptions.filter(r => r.serveType === s.key).length}</b></td>`;
+      html += '</tr>';
+    });
+    html += '</table>';
+    
+    html += '</body></html>';
     
     const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `ricezioni_${new Date().toISOString().slice(0, 10)}.xls`;
+    a.download = `ricezioni_complete_${new Date().toISOString().slice(0, 10)}.xls`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -300,9 +546,9 @@ export default function App() {
     if (highlightMode === 'none' || t === 0) return 'transparent';
     const percentage = (n / t) * 100;
     
-    if (highlightMode === 'green' && percentage >= 70) return '#d1fae5'; // verde tenue
-    if (highlightMode === 'orange' && percentage >= 40 && percentage < 70) return '#fed7aa'; // arancione tenue
-    if (highlightMode === 'red' && percentage < 40) return '#fecaca'; // rosso tenue
+    if (highlightMode === 'green' && percentage >= greenThreshold) return '#d1fae5'; // verde tenue
+    if (highlightMode === 'orange' && percentage >= orangeThreshold && percentage < greenThreshold) return '#fed7aa'; // arancione tenue
+    if (highlightMode === 'red' && percentage < orangeThreshold) return '#fecaca'; // rosso tenue
     
     return 'transparent';
   };
@@ -717,9 +963,36 @@ export default function App() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
             <span style={{ fontSize: '0.875rem', color: '#6b7280', alignSelf: 'center' }}>Evidenzia percentuali:</span>
             <button onClick={() => setHighlightMode('none')} style={{ ...btnStyle('#9ca3af'), opacity: highlightMode === 'none' ? 1 : 0.5 }}>Nessuna</button>
-            <button onClick={() => setHighlightMode('green')} style={{ ...btnStyle('#86efac'), color: '#000', opacity: highlightMode === 'green' ? 1 : 0.5 }}>Verde (≥70%)</button>
-            <button onClick={() => setHighlightMode('orange')} style={{ ...btnStyle('#fed7aa'), color: '#000', opacity: highlightMode === 'orange' ? 1 : 0.5 }}>Arancione (40-69%)</button>
-            <button onClick={() => setHighlightMode('red')} style={{ ...btnStyle('#fecaca'), color: '#000', opacity: highlightMode === 'red' ? 1 : 0.5 }}>Rosso (&lt;40%)</button>
+            <button onClick={() => setHighlightMode('green')} style={{ ...btnStyle('#86efac'), color: '#000', opacity: highlightMode === 'green' ? 1 : 0.5 }}>Verde (≥{greenThreshold}%)</button>
+            <button onClick={() => setHighlightMode('orange')} style={{ ...btnStyle('#fed7aa'), color: '#000', opacity: highlightMode === 'orange' ? 1 : 0.5 }}>Arancione ({orangeThreshold}-{greenThreshold - 1}%)</button>
+            <button onClick={() => setHighlightMode('red')} style={{ ...btnStyle('#fecaca'), color: '#000', opacity: highlightMode === 'red' ? 1 : 0.5 }}>Rosso (&lt;{orangeThreshold}%)</button>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '12px', padding: '12px', background: '#f9fafb', borderRadius: '8px' }}>
+            <span style={{ fontSize: '0.875rem', color: '#6b7280', alignSelf: 'center', fontWeight: 600 }}>Soglie personalizzate:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', color: '#374151' }}>Soglia verde (≥):</label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={greenThreshold}
+                onChange={(e) => setGreenThreshold(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                style={{ width: '60px', padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '0.875rem', textAlign: 'center' }}
+              />
+              <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>%</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', color: '#374151' }}>Soglia arancione (≥):</label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={orangeThreshold}
+                onChange={(e) => setOrangeThreshold(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                style={{ width: '60px', padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '0.875rem', textAlign: 'center' }}
+              />
+              <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>%</span>
+            </div>
           </div>
           <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#6b7280' }}>Ricezioni registrate: <strong>{receptions.length}</strong></p>
         </section>
