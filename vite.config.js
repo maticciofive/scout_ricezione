@@ -2,15 +2,15 @@
    import react from "@vitejs/plugin-react";
    import tailwindcss from "@tailwindcss/vite";
 
-   export default defineConfig({
-     base: '/scout_ricezione/', base: '/scout_ricezione/',
-     plugins: [react(), tailwindcss()],
-     server: {
-       host: "0.0.0.0",
-       port: 3000,
-       strictPort: true,
-       hmr: {
-         port: 3000,
-       },
-     },
-   });
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  base: '/scout_ricezione/',
+  server: {
+    host: "0.0.0.0",
+    port: 3000,
+    strictPort: true,
+    hmr: {
+      port: 3000,
+    },
+  },
+});
