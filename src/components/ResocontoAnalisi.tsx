@@ -218,6 +218,104 @@ export default function ResocontoAnalisi({ giocatori, colpi }: ResocontoAnalisiP
                     </div>
                   )}
 
+                  {/* Punto di Ricezione per Lato - BAGHER */}
+                  {analisi.perFondamentale.bagher.totale > 0 && (
+                    <div className="resoconto-sezione">
+                      <h4>🤲 Punto di Ricezione per Lato - BAGHER</h4>
+                      <p className="resoconto-sezione-descrizione">
+                        Totale bagher: <strong>{analisi.perFondamentale.bagher.totale}</strong> | 
+                        Le 3 direzioni con più esecuzioni per ogni lato sono evidenziate
+                      </p>
+                      <table className="resoconto-tabella">
+                        <thead>
+                          <tr>
+                            <th>Lato</th>
+                            <th>▲ Avanti</th>
+                            <th>◀ Sinistra</th>
+                            <th>● Centro</th>
+                            <th>▶ Destra</th>
+                            <th>▼ Dietro</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {analisi.perFondamentale.bagher.perLato.map((latoData, i) => (
+                            <tr key={i}>
+                              <td><strong>{latoData.lato}</strong><br /><small>({latoData.totale} colpi)</small></td>
+                              {latoData.direzioni.map((dir, j) => (
+                                <td 
+                                  key={j} 
+                                  className={dir.isTop3 ? 'cella-top3' : ''}
+                                  style={{
+                                    backgroundColor: dir.isTop3 ? '#d1fae5' : 'transparent',
+                                    fontWeight: dir.isTop3 ? 700 : 400,
+                                  }}
+                                >
+                                  {dir.totale > 0 ? (
+                                    <>
+                                      <div>{dir.totale}</div>
+                                      <small>{dir.percentuale.toFixed(1)}%</small>
+                                    </>
+                                  ) : (
+                                    <span style={{ color: '#9ca3af' }}>–</span>
+                                  )}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Punto di Ricezione per Lato - PALLEGGIO */}
+                  {analisi.perFondamentale.palleggio.totale > 0 && (
+                    <div className="resoconto-sezione">
+                      <h4>👐 Punto di Ricezione per Lato - PALLEGGIO</h4>
+                      <p className="resoconto-sezione-descrizione">
+                        Totale palleggi: <strong>{analisi.perFondamentale.palleggio.totale}</strong> | 
+                        Le 3 direzioni con più esecuzioni per ogni lato sono evidenziate
+                      </p>
+                      <table className="resoconto-tabella">
+                        <thead>
+                          <tr>
+                            <th>Lato</th>
+                            <th>▲ Avanti</th>
+                            <th>◀ Sinistra</th>
+                            <th>● Centro</th>
+                            <th>▶ Destra</th>
+                            <th>▼ Dietro</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {analisi.perFondamentale.palleggio.perLato.map((latoData, i) => (
+                            <tr key={i}>
+                              <td><strong>{latoData.lato}</strong><br /><small>({latoData.totale} colpi)</small></td>
+                              {latoData.direzioni.map((dir, j) => (
+                                <td 
+                                  key={j} 
+                                  className={dir.isTop3 ? 'cella-top3' : ''}
+                                  style={{
+                                    backgroundColor: dir.isTop3 ? '#dbeafe' : 'transparent',
+                                    fontWeight: dir.isTop3 ? 700 : 400,
+                                  }}
+                                >
+                                  {dir.totale > 0 ? (
+                                    <>
+                                      <div>{dir.totale}</div>
+                                      <small>{dir.percentuale.toFixed(1)}%</small>
+                                    </>
+                                  ) : (
+                                    <span style={{ color: '#9ca3af' }}>–</span>
+                                  )}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
                   {/* Punti di forza e debolezze */}
                   <div className="resoconto-grid-due-colonne">
                     <div className="resoconto-colonna-forza">

@@ -10,6 +10,7 @@ export interface Colpo {
   serveZone?: number;
   speedCategory?: string;
   serveTypology?: string;
+  fundamental?: string;
 }
 
 export interface Metriche {

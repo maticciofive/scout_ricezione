@@ -16,6 +16,23 @@ export interface AnalisiCondizione {
   classificaER: string;
 }
 
+export interface AnalisiFondamentalePerLato {
+  lato: string;
+  totale: number;
+  direzioni: {
+    direzione: string;
+    totale: number;
+    percentuale: number;
+    isTop3: boolean;
+  }[];
+}
+
+export interface AnalisiFondamentale {
+  fondamentale: string;
+  totale: number;
+  perLato: AnalisiFondamentalePerLato[];
+}
+
 export interface AnalisiGiocatore {
   giocatoreIndex: number; // FIX MAPPING ID: Ora è l'indice, non l'ID
   giocatoreNome: string;
@@ -35,6 +52,10 @@ export interface AnalisiGiocatore {
   perProvenienza: AnalisiCondizione[];
   perVelocita: AnalisiCondizione[];
   perTipologia: AnalisiCondizione[];
+  perFondamentale: {
+    bagher: AnalisiFondamentale;
+    palleggio: AnalisiFondamentale;
+  };
   puntiDiForza: {
     migliorEsito: string | null;
     migliorZona: string | null;
@@ -66,6 +87,56 @@ const VELOCITA = ['Lenta', 'Media', 'Veloce'];
 const TIPOLOGIE = ['Flottante', 'Jump Top Spin', 'Jump Flottante'];
 
 /**
+ * Calcola l'analisi per un fondamentale (Bagher o Palleggio)
+ * Restituisce le statistiche per lato con le 3 direzioni più frequenti evidenziate
+ */
+function calcolaAnalisiPerFondamentale(colpi: Colpo[], fondamentale: string): AnalisiFondamentale {
+  const colpiFondamentale = colpi.filter(c => c.fundamental === fondamentale);
+  const totale = colpiFondamentale.length;
+  
+  const perLato: AnalisiFondamentalePerLato[] = ZONE.map(lato => {
+    const colpiLato = colpiFondamentale.filter(c => c.side === lato);
+    const totaleLato = colpiLato.length;
+    
+    // Calcola statistiche per ogni direzione
+    const direzioniStats = DIREZIONI.map(direzione => {
+      const colpiDirezione = colpiLato.filter(c => c.direction === direzione);
+      const totaleDirezione = colpiDirezione.length;
+      const percentuale = totaleLato > 0 ? (totaleDirezione / totaleLato) * 100 : 0;
+      
+      return {
+        direzione,
+        totale: totaleDirezione,
+        percentuale,
+        isTop3: false, // Sarà impostato dopo
+      };
+    });
+    
+    // Trova le 3 direzioni con più esecuzioni
+    const direzioniOrdinate = [...direzioniStats].sort((a, b) => b.totale - a.totale);
+    const top3 = direzioniOrdinate.slice(0, 3).filter(d => d.totale > 0);
+    
+    // Marca le top 3
+    const direzioniConTop3 = direzioniStats.map(d => ({
+      ...d,
+      isTop3: top3.some(t => t.direzione === d.direzione),
+    }));
+    
+    return {
+      lato,
+      totale: totaleLato,
+      direzioni: direzioniConTop3,
+    };
+  });
+  
+  return {
+    fondamentale: fondamentale === 'B' ? 'Bagher' : 'Palleggio',
+    totale,
+    perLato,
+  };
+}
+
+/**
  * Genera l'analisi completa per un giocatore
  * FIX MAPPING ID: giocatoreIndex è l'indice dell'array (0, 1, 2...)
  * che corrisponde a playerIndex nei colpi salvati
@@ -92,6 +163,10 @@ export function generaAnalisiCompleta(
       perProvenienza: [],
       perVelocita: [],
       perTipologia: [],
+      perFondamentale: {
+        bagher: { fondamentale: 'Bagher', totale: 0, perLato: [] },
+        palleggio: { fondamentale: 'Palleggio', totale: 0, perLato: [] },
+      },
       puntiDiForza: {
         migliorEsito: null,
         migliorZona: null,
@@ -237,6 +312,12 @@ export function generaAnalisiCompleta(
   // Sintesi
   const sintesi = generaSintesi(giocatoreNome, metricheGlobali, puntiDiForza, puntiDeboli, colpiGiocatore);
 
+  // Analisi per fondamentale (BAGHER e PALLEGGIO) con evidenze top 3
+  const perFondamentale = {
+    bagher: calcolaAnalisiPerFondamentale(colpiGiocatore, 'B'),
+    palleggio: calcolaAnalisiPerFondamentale(colpiGiocatore, 'P'),
+  };
+
   return {
     giocatoreIndex,
     giocatoreNome,
@@ -253,6 +334,7 @@ export function generaAnalisiCompleta(
     perProvenienza,
     perVelocita,
     perTipologia,
+    perFondamentale,
     puntiDiForza,
     puntiDeboli,
     sintesi,
