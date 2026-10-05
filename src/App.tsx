@@ -653,6 +653,12 @@ export default function App() {
     }
   };
 
+  // NUOVO: Funzione per importare dati da file Excel nell'app principale
+  const handleImportData = (ricezioniImportate: any[]) => {
+    // Aggiungi le nuove ricezioni a quelle esistenti
+    setReceptions(prev => [...prev, ...ricezioniImportate]);
+  };
+
   return (
     <SoglieProvider>
     <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -1697,7 +1703,7 @@ export default function App() {
         <TabellaDirezioneEsito giocatori={players} colpi={receptions} />
 
         {/* NUOVO: Analisi Multi-Giornata */}
-        <AnalisiMultipla />
+        <AnalisiMultipla onImportData={handleImportData} />
       </div>
     </div>
     </SoglieProvider>

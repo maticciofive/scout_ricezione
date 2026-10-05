@@ -24,7 +24,11 @@ interface AnalisiGiornaliera {
   errori: number;
 }
 
-export default function AnalisiMultipla() {
+interface AnalisiMultiplaProps {
+  onImportData?: (ricezioni: any[]) => void;
+}
+
+export default function AnalisiMultipla({ onImportData }: AnalisiMultiplaProps) {
   const [fileCaricati, setFileCaricati] = useState<DatiRicezione[]>([]);
   const [analisi, setAnalisi] = useState<AnalisiGiornaliera[]>([]);
   const [caricamento, setCaricamento] = useState(false);
@@ -175,6 +179,58 @@ export default function AnalisiMultipla() {
     setAnalisi([]);
   };
 
+  const importaDatiNellApp = () => {
+    if (fileCaricati.length === 0) {
+      alert('Nessun file caricato da importare');
+      return;
+    }
+
+    // Chiedi conferma all'utente
+    const totaleRicezioni = fileCaricati.reduce((sum, file) => sum + file.ricezioni.length, 0);
+    const conferma = window.confirm(
+      `Vuoi importare ${totaleRicezioni} ricezioni da ${fileCaricati.length} file nell'app principale?\n\n` +
+      `I dati verranno aggiunti alle ricezioni esistenti e potrai continuare il lavoro.`
+    );
+
+    if (!conferma) return;
+
+    // Converti i dati dal formato Excel al formato dell'app
+    const ricezioniImportate: any[] = [];
+    
+    fileCaricati.forEach(file => {
+      file.ricezioni.forEach((r: any) => {
+        // Mappa i nomi delle colonne dal file Excel al formato dell'app
+        const ricezione = {
+          id: Date.now() + Math.random(),
+          playerIndex: parseInt(r.Giocatore?.replace('Giocatore ', '') || '0') - 1,
+          playerName: r.Giocatore || 'Sconosciuto',
+          zone: parseInt(r.Zona || '0'),
+          side: r.Lato || 'Centro',
+          serveType: r['Tipo Battuta'] || 'F',
+          serveZone: parseInt(r['Zona Battuta'] || '1'),
+          fundamental: r.Fondamentale === 'Bagher' ? 'B' : r.Fondamentale === 'Palleggio' ? 'P' : 'B',
+          direction: r['Punto di ricezione'] === 'Davanti al corpo' ? 'up' :
+                     r['Punto di ricezione'] === 'A sinistra del corpo' ? 'left' :
+                     r['Punto di ricezione'] === 'Al corpo' ? 'center' :
+                     r['Punto di ricezione'] === 'A destra del corpo' ? 'right' :
+                     r['Punto di ricezione'] === 'Dietro al corpo' ? 'down' : 'center',
+          outcome: r.Esito || '+',
+          speed: r['Velocità (km/h)'] ? parseFloat(r['Velocità (km/h)']) : null,
+          timestamp: r['Data e ora'] || new Date().toLocaleString('it-IT'),
+        };
+        ricezioniImportate.push(ricezione);
+      });
+    });
+
+    // Chiama la funzione di callback per importare i dati nell'app principale
+    if (onImportData) {
+      onImportData(ricezioniImportate);
+      alert(`✅ ${ricezioniImportate.length} ricezioni importate con successo!\n\nPuoi ora continuare il lavoro con i dati caricati.`);
+    } else {
+      alert('Funzione di importazione non disponibile');
+    }
+  };
+
   const trovaPositivita = () => {
     if (analisi.length < 2) return null;
     
@@ -258,6 +314,11 @@ export default function AnalisiMultipla() {
               <button onClick={calcolaAnalisi} className="analisi-multipla-btn analisi-multipla-btn-calcola">
                 📈 Calcola Analisi
               </button>
+              {onImportData && (
+                <button onClick={importaDatiNellApp} className="analisi-multipla-btn analisi-multipla-btn-importa">
+                  📥 Importa Dati nell'App
+                </button>
+              )}
               <button onClick={resettaTutto} className="analisi-multipla-btn analisi-multipla-btn-reset">
                 🗑️ Resetta Tutto
               </button>
