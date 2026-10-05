@@ -194,40 +194,91 @@ export default function AnalisiMultipla({ onImportData }: AnalisiMultiplaProps) 
 
     if (!conferma) return;
 
-    // Converti i dati dal formato Excel al formato dell'app
-    const ricezioniImportate: any[] = [];
-    
-    fileCaricati.forEach(file => {
-      file.ricezioni.forEach((r: any) => {
-        // Mappa i nomi delle colonne dal file Excel al formato dell'app
-        const ricezione = {
-          id: Date.now() + Math.random(),
-          playerIndex: parseInt(r.Giocatore?.replace('Giocatore ', '') || '0') - 1,
-          playerName: r.Giocatore || 'Sconosciuto',
-          zone: parseInt(r.Zona || '0'),
-          side: r.Lato || 'Centro',
-          serveType: r['Tipo Battuta'] || 'F',
-          serveZone: parseInt(r['Zona Battuta'] || '1'),
-          fundamental: r.Fondamentale === 'Bagher' ? 'B' : r.Fondamentale === 'Palleggio' ? 'P' : 'B',
-          direction: r['Punto di ricezione'] === 'Davanti al corpo' ? 'up' :
-                     r['Punto di ricezione'] === 'A sinistra del corpo' ? 'left' :
-                     r['Punto di ricezione'] === 'Al corpo' ? 'center' :
-                     r['Punto di ricezione'] === 'A destra del corpo' ? 'right' :
-                     r['Punto di ricezione'] === 'Dietro al corpo' ? 'down' : 'center',
-          outcome: r.Esito || '+',
-          speed: r['Velocità (km/h)'] ? parseFloat(r['Velocità (km/h)']) : null,
-          timestamp: r['Data e ora'] || new Date().toLocaleString('it-IT'),
-        };
-        ricezioniImportate.push(ricezione);
-      });
-    });
+    try {
+      // Converti i dati dal formato Excel al formato dell'app
+      const ricezioniImportate: any[] = [];
+      let errori = 0;
+      
+      fileCaricati.forEach(file => {
+        file.ricezioni.forEach((r: any, index: number) => {
+          try {
+            // Estrai i valori con gestione errori
+            const giocatoreStr = r.Giocatore || r['Giocatore'] || '';
+            const playerIndex = parseInt(giocatoreStr.replace('Giocatore ', '').replace('Player ', '')) - 1;
+            const zone = parseInt(r.Zona || r['Zona'] || '0');
+            const side = r.Lato || r['Lato'] || 'Centro';
+            const serveType = r['Tipo Battuta'] || r['Tipo di Battuta'] || r['Serve Type'] || 'F';
+            const serveZone = parseInt(r['Zona Battuta'] || r['Zona di Battuta'] || r['Serve Zone'] || '1');
+            const fundamentalStr = r.Fondamentale || r['Fondamentale'] || 'Bagher';
+            const directionStr = r['Punto di ricezione'] || r['Direzione'] || r['Direction'] || 'Al corpo';
+            const outcome = r.Esito || r['Esito'] || r['Outcome'] || '+';
+            const speedStr = r['Velocità (km/h)'] || r['Velocità'] || r['Speed'] || '';
+            const timestamp = r['Data e ora'] || r['Data'] || r['Timestamp'] || new Date().toLocaleString('it-IT');
 
-    // Chiama la funzione di callback per importare i dati nell'app principale
-    if (onImportData) {
-      onImportData(ricezioniImportate);
-      alert(`✅ ${ricezioniImportate.length} ricezioni importate con successo!\n\nPuoi ora continuare il lavoro con i dati caricati.`);
-    } else {
-      alert('Funzione di importazione non disponibile');
+            // Converti fondamentale
+            let fundamental = 'B';
+            if (fundamentalStr === 'Palleggio' || fundamentalStr === 'P' || fundamentalStr === 'Palleggio (mani)') {
+              fundamental = 'P';
+            }
+
+            // Converti direzione
+            let direction = 'center';
+            if (directionStr === 'Davanti al corpo' || directionStr === 'Davanti' || directionStr === '▲') {
+              direction = 'up';
+            } else if (directionStr === 'A sinistra del corpo' || directionStr === 'Sinistra' || directionStr === '◀') {
+              direction = 'left';
+            } else if (directionStr === 'Al corpo' || directionStr === 'Centro' || directionStr === '●') {
+              direction = 'center';
+            } else if (directionStr === 'A destra del corpo' || directionStr === 'Destra' || directionStr === '▶') {
+              direction = 'right';
+            } else if (directionStr === 'Dietro al corpo' || directionStr === 'Dietro' || directionStr === '▼') {
+              direction = 'down';
+            }
+
+            // Converti velocità
+            const speed = speedStr ? parseFloat(speedStr) : null;
+
+            // Crea l'oggetto ricezione
+            const ricezione = {
+              id: Date.now() + Math.random() + index,
+              playerIndex: isNaN(playerIndex) ? 0 : playerIndex,
+              playerName: giocatoreStr || 'Sconosciuto',
+              zone: isNaN(zone) ? 0 : zone,
+              side: side,
+              serveType: serveType,
+              serveZone: isNaN(serveZone) ? 1 : serveZone,
+              fundamental: fundamental,
+              direction: direction,
+              outcome: outcome,
+              speed: isNaN(speed as number) ? null : speed,
+              timestamp: timestamp,
+            };
+            
+            ricezioniImportate.push(ricezione);
+          } catch (err) {
+            console.error(`Errore nella riga ${index + 1}:`, err);
+            errori++;
+          }
+        });
+      });
+
+      // Chiama la funzione di callback per importare i dati nell'app principale
+      if (onImportData) {
+        onImportData(ricezioniImportate);
+        
+        let messaggio = `✅ ${ricezioniImportate.length} ricezioni importate con successo!`;
+        if (errori > 0) {
+          messaggio += `\n\n⚠️ ${errori} righe hanno avuto errori e sono state saltate.`;
+        }
+        messaggio += `\n\nPuoi ora continuare il lavoro con i dati caricati.`;
+        
+        alert(messaggio);
+      } else {
+        alert('❌ Errore: Funzione di importazione non disponibile');
+      }
+    } catch (error) {
+      console.error('Errore durante l\'importazione:', error);
+      alert(`❌ Errore durante l'importazione dei dati:\n\n${error instanceof Error ? error.message : 'Errore sconosciuto'}`);
     }
   };
 
