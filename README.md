@@ -35,7 +35,7 @@
 ### Parametri di Battuta
 - **Zona di provenienza**: 1, 6, 5
 - **Velocità**: Lenta 🐢, Media 🚶, Veloce 
-- **Tipologia**: Flottante , Jump Top Spin 🌀, Jump Flottante ⚡
+- **Tipologia**: Flottante , Jump Top Spin 🌀, Jump Flottante ⚡, Splot, Flin
 
 ### 🧠 Analisi Tecnica Avanzata (Match Analysis)
 - **Parte del corpo**: avambracci, mani, piedi, petto, altro
