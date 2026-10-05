@@ -657,19 +657,16 @@ export default function App() {
   const handleImportData = (ricezioniImportate: any[]) => {
     // Estrai i nomi unici dei giocatori dalle ricezioni importate
     const nomiGiocatoriUnici: string[] = [];
-    const playerIndexToName: Record<number, string> = {};
+    const nameToIndex: Record<string, number> = {};
     
+    // Prima pass: raccogli tutti i nomi unici e assegna un indice a ciascuno
     ricezioniImportate.forEach(r => {
-      const index = r.playerIndex;
       const name = r.playerName;
       
       if (name && !nomiGiocatoriUnici.includes(name)) {
+        const newIndex = nomiGiocatoriUnici.length;
         nomiGiocatoriUnici.push(name);
-      }
-      
-      // Mappa playerIndex -> nome
-      if (index !== undefined && name) {
-        playerIndexToName[index] = name;
+        nameToIndex[name] = newIndex;
       }
     });
     
@@ -677,19 +674,16 @@ export default function App() {
     if (nomiGiocatoriUnici.length > 0) {
       const nuoviPlayers: Player[] = [];
       
-      // Crea un array di giocatori con i nomi importati
-      const maxIndex = Math.max(...Object.keys(playerIndexToName).map(k => parseInt(k)));
-      
-      for (let i = 0; i <= maxIndex; i++) {
-        const nome = playerIndexToName[i] || `Giocatore ${i + 1}`;
-        const existingPlayer = players[i];
+      // Crea un giocatore per ogni nome unico trovato
+      nomiGiocatoriUnici.forEach((nome, index) => {
+        const existingPlayer = players[index];
         
         nuoviPlayers.push({
-          id: i + 1,
+          id: index + 1,
           name: nome,
-          zone: existingPlayer?.zone || (i < 3 ? [5, 6, 1][i] : 5), // Zona di default per i primi 3
+          zone: existingPlayer?.zone || (index < 3 ? [5, 6, 1][index] : 5), // Zona di default per i primi 3
         });
-      }
+      });
       
       setPlayers(nuoviPlayers);
       setPlayerCount(nuoviPlayers.length);
@@ -698,10 +692,25 @@ export default function App() {
       // Salva in localStorage
       saveJSON('vb_players', nuoviPlayers);
       saveJSON('vb_count', nuoviPlayers.length);
+      
+      // Seconda pass: aggiorna i playerIndex nelle ricezioni importate
+      // per farli corrispondere ai nuovi indici dei giocatori
+      const ricezioniAggiornate = ricezioniImportate.map(r => {
+        const oldName = r.playerName;
+        const newIndex = nameToIndex[oldName];
+        
+        return {
+          ...r,
+          playerIndex: newIndex !== undefined ? newIndex : r.playerIndex,
+        };
+      });
+      
+      // Aggiungi le ricezioni aggiornate a quelle esistenti
+      setReceptions(prev => [...prev, ...ricezioniAggiornate]);
+    } else {
+      // Se non ci sono nomi, importa solo le ricezioni
+      setReceptions(prev => [...prev, ...ricezioniImportate]);
     }
-    
-    // Aggiungi le nuove ricezioni a quelle esistenti
-    setReceptions(prev => [...prev, ...ricezioniImportate]);
   };
 
   return (
