@@ -32,7 +32,7 @@
   - `/` Slash (grigio)
   - `=` Errore / Ace subìto (rosso)
 
-### 🏓 Parametri di Battuta
+### Parametri di Battuta
 - **Zona di provenienza**: 1, 6, 5
 - **Velocità**: Lenta 🐢, Media 🚶, Veloce 
 - **Tipologia**: Flottante , Jump Top Spin 🌀, Jump Flottante ⚡
