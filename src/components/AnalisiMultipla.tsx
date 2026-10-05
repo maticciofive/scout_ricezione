@@ -207,7 +207,15 @@ export default function AnalisiMultipla({ onImportData }: AnalisiMultiplaProps) 
             const playerIndex = parseInt(giocatoreStr.replace('Giocatore ', '').replace('Player ', '')) - 1;
             const zone = parseInt(r.Zona || r['Zona'] || '0');
             const side = r.Lato || r['Lato'] || 'Centro';
-            const serveType = r['Tipo Battuta'] || r['Tipo di Battuta'] || r['Serve Type'] || 'F';
+            // Estrai il tipo di battuta e converti in codice
+            let serveType = r['Tipo Battuta'] || r['Tipo di Battuta'] || r['Serve Type'] || 'F';
+            // Converti etichette complete in codici
+            if (serveType === 'Float' || serveType === 'Flottante') serveType = 'F';
+            else if (serveType === 'Salto Float' || serveType === 'Salto Flottante') serveType = 'SF';
+            else if (serveType === 'Salto Spin') serveType = 'SS';
+            else if (serveType === 'Splot') serveType = 'SP';
+            else if (serveType === 'Flin') serveType = 'FL';
+            
             const serveZone = parseInt(r['Zona Battuta'] || r['Zona di Battuta'] || r['Serve Zone'] || '1');
             const fundamentalStr = r.Fondamentale || r['Fondamentale'] || 'Bagher';
             const directionStr = r['Punto di ricezione'] || r['Direzione'] || r['Direction'] || 'Al corpo';
