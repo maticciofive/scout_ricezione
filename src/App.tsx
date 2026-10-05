@@ -6,6 +6,7 @@ import ResocontoAnalisi from './components/ResocontoAnalisi'; // NUOVO
 import AnalisiMultipla from './components/AnalisiMultipla'; // NUOVO - Analisi multi-giornata
 import TabellaAnalisiIncrociata from './components/TabellaAnalisiIncrociata'; // NUOVO - Tabella pivot Zona × Tipologia
 import TabellaDirezioneEsito from './components/TabellaDirezioneEsito'; // NUOVO - Tabella Direzione × Esito per Lato
+import CampoGiocatoriLiberi from './components/CampoGiocatoriLiberi'; // NUOVO - Campo con giocatori spostabili
 
 interface Player {
   id: number;
@@ -852,75 +853,14 @@ export default function App() {
           {step !== 3 && (
             <h2 style={{ textAlign: 'center', margin: '0 0 12px', color: '#374151', fontSize: 'clamp(1.1rem, 4vw, 1.25rem)' }}>Campo da Gioco</h2>
           )}
-          <div style={{ maxWidth: '380px', margin: '0 auto', width: '100%' }}>
-            <div style={{ height: '10px', background: 'linear-gradient(90deg, #4b5563, #9ca3af, #4b5563)', borderRadius: '6px 6px 0 0' }} />
-            <div style={{
-              background: 'linear-gradient(180deg, #fef3c7, #fde68a)',
-              border: '4px solid #b45309',
-              borderRadius: '0 0 8px 8px',
-              padding: '8px',
-              position: 'relative',
-            }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)', gap: '4px', aspectRatio: '3/2.5' }}>
-                {ZONE_GRID.flat().map(zone => {
-                  const pIdx = players.findIndex(p => p.zone === zone);
-                  const player = pIdx >= 0 ? players[pIdx] : null;
-                  const isSelected = pIdx === selectedPlayerIdx;
-                  const isZone6 = zone === 6;
-
-                  const isBottomZone = zone === 5 || zone === 6 || zone === 1;
-                  
-                  return (
-                    <div
-                      key={zone}
-                      style={{
-                        display: 'flex',
-                        alignItems: isBottomZone ? 'flex-start' : 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                        border: '1px solid rgba(255,255,255,0.4)',
-                        transform: isZone6 ? 'translateY(-6px)' : undefined,
-                        zIndex: isZone6 ? 10 : 1,
-                        paddingTop: isBottomZone ? '4px' : '0',
-                      }}
-                    >
-                      <span style={{ position: 'absolute', top: '2px', left: '4px', fontSize: 'clamp(8px, 2vw, 10px)', fontWeight: 700, color: 'rgba(120,53,15,0.5)' }}>{zone}</span>
-                      {player ? (
-                        <button
-                          onClick={() => step === 3 ? selectPlayer(pIdx) : null}
-                          disabled={step !== 3}
-                          style={{
-                            width: 'clamp(44px, 15vw, 56px)',
-                            height: 'clamp(44px, 15vw, 56px)',
-                            borderRadius: '50%',
-                            border: isSelected ? '3px solid #2563eb' : '2px solid #d1d5db',
-                            background: isSelected ? '#2563eb' : '#fff',
-                            color: isSelected ? '#fff' : '#1f2937',
-                            cursor: step === 3 ? 'pointer' : 'not-allowed',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: isSelected ? '0 0 0 4px rgba(37,99,235,0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
-                            transition: 'all 0.15s',
-                            padding: '2px',
-                            opacity: step === 3 ? 1 : 0.6,
-                          }}
-                        >
-                          <span style={{ fontSize: 'clamp(8px, 2.5vw, 10px)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'clamp(36px, 12vw, 48px)' }}>{player.name}</span>
-                          <span style={{ fontSize: 'clamp(7px, 2vw, 9px)', opacity: 0.7 }}>Z.{zone}</span>
-                        </button>
-                      ) : (
-                        <div style={{ width: 'clamp(28px, 10vw, 36px)', height: 'clamp(28px, 10vw, 36px)', borderRadius: '50%', border: '1px dashed rgba(180,83,9,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <span style={{ fontSize: 'clamp(7px, 2vw, 9px)', color: '#92400e' }}>Z.{zone}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          
+          {/* NUOVO: Campo con giocatori spostabili liberamente */}
+          <CampoGiocatoriLiberi
+            giocatori={players}
+            giocatoreSelezionato={selectedPlayerIdx}
+            onPlayerClick={step === 3 ? selectPlayer : undefined}
+          />
+          
           <p style={{ textAlign: 'center', marginTop: '12px', fontSize: 'clamp(0.75rem, 3vw, 0.875rem)', color: '#6b7280', fontStyle: 'italic' }}>{guideMsg}</p>
         </section>
 
