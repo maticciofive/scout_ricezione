@@ -655,6 +655,51 @@ export default function App() {
 
   // NUOVO: Funzione per importare dati da file Excel nell'app principale
   const handleImportData = (ricezioniImportate: any[]) => {
+    // Estrai i nomi unici dei giocatori dalle ricezioni importate
+    const nomiGiocatoriUnici: string[] = [];
+    const playerIndexToName: Record<number, string> = {};
+    
+    ricezioniImportate.forEach(r => {
+      const index = r.playerIndex;
+      const name = r.playerName;
+      
+      if (name && !nomiGiocatoriUnici.includes(name)) {
+        nomiGiocatoriUnici.push(name);
+      }
+      
+      // Mappa playerIndex -> nome
+      if (index !== undefined && name) {
+        playerIndexToName[index] = name;
+      }
+    });
+    
+    // Se ci sono nomi di giocatori, aggiorna l'array players
+    if (nomiGiocatoriUnici.length > 0) {
+      const nuoviPlayers: Player[] = [];
+      
+      // Crea un array di giocatori con i nomi importati
+      const maxIndex = Math.max(...Object.keys(playerIndexToName).map(k => parseInt(k)));
+      
+      for (let i = 0; i <= maxIndex; i++) {
+        const nome = playerIndexToName[i] || `Giocatore ${i + 1}`;
+        const existingPlayer = players[i];
+        
+        nuoviPlayers.push({
+          id: i + 1,
+          name: nome,
+          zone: existingPlayer?.zone || (i < 3 ? [5, 6, 1][i] : 5), // Zona di default per i primi 3
+        });
+      }
+      
+      setPlayers(nuoviPlayers);
+      setPlayerCount(nuoviPlayers.length);
+      setTempCount(nuoviPlayers.length);
+      
+      // Salva in localStorage
+      saveJSON('vb_players', nuoviPlayers);
+      saveJSON('vb_count', nuoviPlayers.length);
+    }
+    
     // Aggiungi le nuove ricezioni a quelle esistenti
     setReceptions(prev => [...prev, ...ricezioniImportate]);
   };
