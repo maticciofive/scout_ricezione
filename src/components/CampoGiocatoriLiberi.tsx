@@ -65,7 +65,10 @@ export default function CampoGiocatoriLiberi({
 
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-
+  
+  // Ref per tracciare le zone precedenti dei giocatori
+  const zonePrecedentiRef = useRef<Record<number, number>>({});
+  
   // Salvataggio in localStorage
   useEffect(() => {
     try {
@@ -74,7 +77,33 @@ export default function CampoGiocatoriLiberi({
       console.error('Errore nel salvataggio posizioni:', error);
     }
   }, [posizioniLibere]);
-
+  
+  // Aggiorna posizioni quando cambiano le zone dei giocatori
+  useEffect(() => {
+    const zonePrecedenti = zonePrecedentiRef.current;
+    let zoneCambiate = false;
+    const nuovePosizioni = { ...posizioniLibere };
+    
+    giocatori.forEach((giocatore, idx) => {
+      const playerId = `g${idx}`;
+      const zonaPrecedente = zonePrecedenti[idx];
+      
+      // Se la zona è cambiata, aggiorna la posizione
+      if (zonaPrecedente !== undefined && zonaPrecedente !== giocatore.zone) {
+        const nuovaPos = POSIZIONI_DEFAULT[giocatore.zone] || { x: 50, y: 50 };
+        nuovePosizioni[playerId] = nuovaPos;
+        zoneCambiate = true;
+      }
+      
+      // Aggiorna il ref con la zona corrente
+      zonePrecedenti[idx] = giocatore.zone;
+    });
+    
+    // Se almeno una zona è cambiata, aggiorna le posizioni
+    if (zoneCambiate) {
+      setPosizioniLibere(nuovePosizioni);
+    }
+  }, [giocatori]);
   // Gestione drag & drop
   const handleMouseDown = (e: React.MouseEvent, playerId: string) => {
     e.preventDefault();
