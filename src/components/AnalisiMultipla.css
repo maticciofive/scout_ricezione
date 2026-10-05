@@ -189,6 +189,15 @@
   background: #4b5563;
 }
 
+.analisi-multipla-btn-importa {
+  background: #8b5cf6;
+  color: white;
+}
+
+.analisi-multipla-btn-importa:hover {
+  background: #7c3aed;
+}
+
 /* Sintesi */
 .analisi-multipla-periodo {
   background: white;
