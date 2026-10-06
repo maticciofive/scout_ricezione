@@ -7,6 +7,9 @@ import AnalisiMultipla from './components/AnalisiMultipla'; // NUOVO - Analisi m
 import TabellaAnalisiIncrociata from './components/TabellaAnalisiIncrociata'; // NUOVO - Tabella pivot Zona × Tipologia
 import TabellaDirezioneEsito from './components/TabellaDirezioneEsito'; // NUOVO - Tabella Direzione × Esito per Lato
 import CampoGiocatoriLiberi from './components/CampoGiocatoriLiberi'; // NUOVO - Campo con giocatori spostabili
+import HeatMapCampo from './components/HeatMapCampo'; // NUOVO - Heat Map del Campo
+import ConfrontoGiocatori from './components/ConfrontoGiocatori'; // NUOVO - Confronto tra Giocatori
+import ExportPDF from './components/ExportPDF'; // NUOVO - Export PDF Professionale
 
 interface Player {
   id: number;
@@ -1818,6 +1821,15 @@ export default function App() {
 
         {/* NUOVO: Analisi Multi-Giornata */}
         <AnalisiMultipla onImportData={handleImportData} />
+
+        {/* NUOVO: Heat Map del Campo */}
+        <HeatMapCampo players={players} receptions={receptions} />
+
+        {/* NUOVO: Confronto Giocatori */}
+        <ConfrontoGiocatori players={players} receptions={receptions} />
+
+        {/* NUOVO: Export PDF Professionale */}
+        <ExportPDF players={players} receptions={receptions} />
 
         {/* NUOVO: Modal Modifica Ricezione */}
         {editingReception && (
