@@ -82,6 +82,7 @@ export interface AnalisiGiocatore {
 const ESITI = ['Perfetta', 'Positiva', 'Esclamativa', 'Negativa', 'Slash', 'Errore'];
 const ZONE = ['Sinistra', 'Centro', 'Destra'];
 const DIREZIONI = ['Davanti al corpo', 'A sinistra del corpo', 'Al corpo', 'A destra del corpo', 'Dietro al corpo'];
+const DIREZIONI_CHIAVI = ['up', 'left', 'center', 'right', 'down']; // FIX: Chiavi effettive salvate nei dati
 const PROVENIENZE = ['Zona 1', 'Zona 6', 'Zona 5'];
 const VELOCITA = ['Lenta', 'Media', 'Veloce'];
 const TIPOLOGIE = ['Flottante', 'Jump Top Spin', 'Jump Flottante'];
@@ -98,14 +99,14 @@ function calcolaAnalisiPerFondamentale(colpi: Colpo[], fondamentale: string): An
     const colpiLato = colpiFondamentale.filter(c => c.side === lato);
     const totaleLato = colpiLato.length;
     
-    // Calcola statistiche per ogni direzione
-    const direzioniStats = DIREZIONI.map(direzione => {
-      const colpiDirezione = colpiLato.filter(c => c.direction === direzione);
+    // FIX: Usa le chiavi effettive salvate nei dati ('up', 'left', 'center', 'right', 'down')
+    const direzioniStats = DIREZIONI_CHIAVI.map((chiave, idx) => {
+      const colpiDirezione = colpiLato.filter(c => c.direction === chiave);
       const totaleDirezione = colpiDirezione.length;
       const percentuale = totaleLato > 0 ? (totaleDirezione / totaleLato) * 100 : 0;
       
       return {
-        direzione,
+        direzione: DIREZIONI[idx], // Usa l'etichetta per la visualizzazione
         totale: totaleDirezione,
         percentuale,
         isTop3: false, // Sarà impostato dopo
