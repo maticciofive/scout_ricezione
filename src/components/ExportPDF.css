@@ -1,0 +1,131 @@
+.export-pdf-container {
+  background: white;
+  border-radius: 12px;
+  padding: clamp(16px, 3vw, 24px);
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.export-pdf-title {
+  margin: 0 0 20px 0;
+  color: #1e40af;
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+  text-align: center;
+}
+
+.export-pdf-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.export-pdf-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-pdf-control-group label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.export-pdf-control-group select {
+  padding: 10px 12px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.export-pdf-control-group select:hover {
+  border-color: #3b82f6;
+}
+
+.export-pdf-control-group select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.export-pdf-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.export-pdf-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.export-pdf-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-pdf-info {
+  padding: 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-radius: 8px;
+  border-left: 4px solid #3b82f6;
+}
+
+.export-pdf-info h4 {
+  margin: 0 0 12px 0;
+  color: #1e40af;
+  font-size: 1rem;
+}
+
+.export-pdf-info ul {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
+}
+
+.export-pdf-info li {
+  margin: 6px 0;
+  color: #374151;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.export-pdf-info strong {
+  color: #1e40af;
+}
+
+.export-pdf-info p {
+  margin: 12px 0 8px 0;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .export-pdf-controls {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .export-pdf-control-group {
+    flex: 1;
+  }
+
+  .export-pdf-btn {
+    align-self: flex-end;
+  }
+}
