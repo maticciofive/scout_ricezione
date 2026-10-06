@@ -38,6 +38,8 @@ interface StatisticheGiocatore {
   errori: number;
   perZona: Record<string, number>;
   perLato: Record<string, { totale: number; pp: number; er: number }>;
+  perServeZone: Record<number, { totale: number; pp: number; er: number }>;
+  perServeType: Record<string, { totale: number; pp: number; er: number }>;
 }
 
 export default function ConfrontoGiocatori({ players, receptions }: ConfrontoGiocatoriProps) {
@@ -64,6 +66,8 @@ export default function ConfrontoGiocatori({ players, receptions }: ConfrontoGio
         errori: 0,
         perZona: {},
         perLato: {},
+        perServeZone: {},
+        perServeType: {},
       };
     }
 
@@ -110,6 +114,50 @@ export default function ConfrontoGiocatori({ players, receptions }: ConfrontoGio
       };
     });
 
+    // Statistiche per zona di provenienza battuta
+    const perServeZone: Record<number, { totale: number; positive: number; errors: number }> = {
+      1: { totale: 0, positive: 0, errors: 0 },
+      5: { totale: 0, positive: 0, errors: 0 },
+      6: { totale: 0, positive: 0, errors: 0 },
+    };
+
+    playerReceptions.forEach(r => {
+      if (perServeZone[r.serveZone]) {
+        perServeZone[r.serveZone].totale++;
+        if (r.outcome === '#' || r.outcome === '+') perServeZone[r.serveZone].positive++;
+        if (r.outcome === '=') perServeZone[r.serveZone].errors++;
+      }
+    });
+
+    const perServeZoneCalcolato: Record<number, { totale: number; pp: number; er: number }> = {};
+    Object.entries(perServeZone).forEach(([zone, stats]) => {
+      perServeZoneCalcolato[parseInt(zone)] = {
+        totale: stats.totale,
+        pp: stats.totale > 0 ? (stats.positive / stats.totale) * 100 : 0,
+        er: stats.totale > 0 ? ((stats.positive - stats.errors) / stats.totale) * 100 : 0,
+      };
+    });
+
+    // Statistiche per tipo di battuta
+    const perServeType: Record<string, { totale: number; positive: number; errors: number }> = {};
+    playerReceptions.forEach(r => {
+      if (!perServeType[r.serveType]) {
+        perServeType[r.serveType] = { totale: 0, positive: 0, errors: 0 };
+      }
+      perServeType[r.serveType].totale++;
+      if (r.outcome === '#' || r.outcome === '+') perServeType[r.serveType].positive++;
+      if (r.outcome === '=') perServeType[r.serveType].errors++;
+    });
+
+    const perServeTypeCalcolato: Record<string, { totale: number; pp: number; er: number }> = {};
+    Object.entries(perServeType).forEach(([type, stats]) => {
+      perServeTypeCalcolato[type] = {
+        totale: stats.totale,
+        pp: stats.totale > 0 ? (stats.positive / stats.totale) * 100 : 0,
+        er: stats.totale > 0 ? ((stats.positive - stats.errors) / stats.totale) * 100 : 0,
+      };
+    });
+
     return {
       nome: players[playerIndex]?.name || 'Sconosciuto',
       totale,
@@ -125,6 +173,8 @@ export default function ConfrontoGiocatori({ players, receptions }: ConfrontoGio
       errori,
       perZona,
       perLato: perLatoCalcolato,
+      perServeZone: perServeZoneCalcolato,
+      perServeType: perServeTypeCalcolato,
     };
   };
 
@@ -317,6 +367,79 @@ export default function ConfrontoGiocatori({ players, receptions }: ConfrontoGio
                   </table>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Confronto per zona di provenienza battuta */}
+          <div className="confronto-lato-container">
+            <h3>🏐 Confronto per Zona di Provenienza Battuta</h3>
+            <div className="confronto-lato-grid">
+              {[1, 5, 6].map(zone => (
+                <div key={zone} className="confronto-lato-card">
+                  <h4>Zona {zone}</h4>
+                  <table className="confronto-lato-tabella">
+                    <thead>
+                      <tr>
+                        <th>Giocatore</th>
+                        <th>Totale</th>
+                        <th>PP</th>
+                        <th>ER</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {statisticheGiocatori.map((stat, idx) => (
+                        <tr key={idx}>
+                          <td style={{ color: colors[idx], fontWeight: 600 }}>{stat.nome}</td>
+                          <td>{stat.perServeZone[zone]?.totale || 0}</td>
+                          <td>{stat.perServeZone[zone]?.pp.toFixed(1) || '0.0'}%</td>
+                          <td>{stat.perServeZone[zone]?.er.toFixed(1) || '0.0'}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Confronto per tipo di battuta */}
+          <div className="confronto-lato-container">
+            <h3>🎯 Confronto per Tipo di Battuta</h3>
+            <div className="confronto-lato-grid">
+              {Object.keys(statisticheGiocatori[0]?.perServeType || {}).map(type => {
+                const typeLabels: Record<string, string> = {
+                  'F': 'Float',
+                  'SF': 'Salto Float',
+                  'SS': 'Salto Spin',
+                  'SP': 'Splot',
+                  'FL': 'Flin'
+                };
+                return (
+                  <div key={type} className="confronto-lato-card">
+                    <h4>{typeLabels[type] || type}</h4>
+                    <table className="confronto-lato-tabella">
+                      <thead>
+                        <tr>
+                          <th>Giocatore</th>
+                          <th>Totale</th>
+                          <th>PP</th>
+                          <th>ER</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {statisticheGiocatori.map((stat, idx) => (
+                          <tr key={idx}>
+                            <td style={{ color: colors[idx], fontWeight: 600 }}>{stat.nome}</td>
+                            <td>{stat.perServeType[type]?.totale || 0}</td>
+                            <td>{stat.perServeType[type]?.pp.toFixed(1) || '0.0'}%</td>
+                            <td>{stat.perServeType[type]?.er.toFixed(1) || '0.0'}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
