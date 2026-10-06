@@ -269,6 +269,7 @@ export default function App() {
       serveZone: reception.serveZone,
       serveType: reception.serveType,
       playerIndex: reception.playerIndex,
+      zone: reception.zone,
       fundamental: reception.fundamental,
       direction: reception.direction,
       outcome: reception.outcome,
@@ -279,12 +280,15 @@ export default function App() {
   const saveEditReception = () => {
     if (!editingReception) return;
     
+    // Usa la zone dal form se presente, altrimenti calcolala dal giocatore
+    const zone = editForm.zone !== undefined ? editForm.zone : (players[editForm.playerIndex || 0]?.zone || editingReception.zone);
+    
     const updatedReception: Reception = {
       ...editingReception,
       ...editForm,
       playerName: players[editForm.playerIndex || 0]?.name || editingReception.playerName,
-      zone: players[editForm.playerIndex || 0]?.zone || editingReception.zone,
-      side: getSideForZone(players[editForm.playerIndex || 0]?.zone || editingReception.zone),
+      zone: zone,
+      side: getSideForZone(zone),
     };
     
     setReceptions(prev => prev.map(r => r.id === editingReception.id ? updatedReception : r));
@@ -1923,6 +1927,36 @@ export default function App() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Zona di Ricezione */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                  📍 Zona di Ricezione
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {ALL_ZONES.map(zone => (
+                    <button
+                      key={zone}
+                      onClick={() => setEditForm(prev => ({ ...prev, zone: zone }))}
+                      style={{
+                        padding: '10px',
+                        background: editForm.zone === zone ? '#2563eb' : '#f3f4f6',
+                        color: editForm.zone === zone ? '#fff' : '#374151',
+                        border: editForm.zone === zone ? '2px solid #1d4ed8' : '2px solid #d1d5db',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      Zona {zone}
+                    </button>
+                  ))}
+                </div>
+                <p style={{ margin: '8px 0 0', fontSize: '0.75rem', color: '#6b7280' }}>
+                  Lato: {getSideForZone(editForm.zone || editingReception?.zone || 0)}
+                </p>
               </div>
 
               {/* Fondamentale */}
