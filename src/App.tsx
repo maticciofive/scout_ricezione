@@ -124,6 +124,10 @@ export default function App() {
   const [showConfig, setShowConfig] = useState(false);
   const [tempCount, setTempCount] = useState(playerCount);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleString('it-IT'));
+  
+  // NUOVO: Stato per modifica ricezione
+  const [editingReception, setEditingReception] = useState<Reception | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Reception>>({});
 
   useEffect(() => { saveJSON('vb_players', players); }, [players]);
   useEffect(() => { saveJSON('vb_receptions', receptions); }, [receptions]);
@@ -256,6 +260,41 @@ export default function App() {
 
   const deleteReception = (id: number) => {
     setReceptions(prev => prev.filter(r => r.id !== id));
+  };
+
+  // NUOVO: Funzioni per modifica ricezione
+  const startEditReception = (reception: Reception) => {
+    setEditingReception(reception);
+    setEditForm({
+      serveZone: reception.serveZone,
+      serveType: reception.serveType,
+      playerIndex: reception.playerIndex,
+      fundamental: reception.fundamental,
+      direction: reception.direction,
+      outcome: reception.outcome,
+      speed: reception.speed,
+    });
+  };
+
+  const saveEditReception = () => {
+    if (!editingReception) return;
+    
+    const updatedReception: Reception = {
+      ...editingReception,
+      ...editForm,
+      playerName: players[editForm.playerIndex || 0]?.name || editingReception.playerName,
+      zone: players[editForm.playerIndex || 0]?.zone || editingReception.zone,
+      side: getSideForZone(players[editForm.playerIndex || 0]?.zone || editingReception.zone),
+    };
+    
+    setReceptions(prev => prev.map(r => r.id === editingReception.id ? updatedReception : r));
+    setEditingReception(null);
+    setEditForm({});
+  };
+
+  const cancelEditReception = () => {
+    setEditingReception(null);
+    setEditForm({});
   };
 
   const resetAll = () => {
@@ -1259,21 +1298,38 @@ export default function App() {
                           {r.speed !== null && r.speed !== undefined ? `${r.speed} km/h` : '–'}
                         </td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>
-                          <button
-                            onClick={() => deleteReception(r.id)}
-                            style={{
-                              padding: '4px 10px',
-                              background: '#ef4444',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                            }}
-                          >
-                            Annulla
-                          </button>
+                          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <button
+                              onClick={() => startEditReception(r)}
+                              style={{
+                                padding: '4px 10px',
+                                background: '#3b82f6',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              ✏️ Modifica
+                            </button>
+                            <button
+                              onClick={() => deleteReception(r.id)}
+                              style={{
+                                padding: '4px 10px',
+                                background: '#ef4444',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              🗑️ Annulla
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1758,6 +1814,327 @@ export default function App() {
 
         {/* NUOVO: Analisi Multi-Giornata */}
         <AnalisiMultipla onImportData={handleImportData} />
+
+        {/* NUOVO: Modal Modifica Ricezione */}
+        {editingReception && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '16px',
+          }}>
+            <div style={{
+              background: '#fff',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            }}>
+              <h2 style={{ margin: '0 0 20px', color: '#1e40af', fontSize: 'clamp(1.2rem, 4vw, 1.5rem)' }}>
+                ✏️ Modifica Ricezione
+              </h2>
+
+              {/* Zona Battuta */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                  📍 Zona di Provenienza Battuta
+                </label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {SERVE_ZONES.map(sz => (
+                    <button
+                      key={sz.zone}
+                      onClick={() => setEditForm(prev => ({ ...prev, serveZone: sz.zone }))}
+                      style={{
+                        padding: '10px 16px',
+                        background: editForm.serveZone === sz.zone ? '#2563eb' : '#f3f4f6',
+                        color: editForm.serveZone === sz.zone ? '#fff' : '#374151',
+                        border: editForm.serveZone === sz.zone ? '2px solid #1d4ed8' : '2px solid #d1d5db',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      {sz.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tipo Battuta */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                  🏐 Tipo di Battuta
+                </label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {SERVE_TYPES.map(s => (
+                    <button
+                      key={s.key}
+                      onClick={() => setEditForm(prev => ({ ...prev, serveType: s.key }))}
+                      style={{
+                        padding: '10px 16px',
+                        background: editForm.serveType === s.key ? '#2563eb' : '#f3f4f6',
+                        color: editForm.serveType === s.key ? '#fff' : '#374151',
+                        border: editForm.serveType === s.key ? '2px solid #1d4ed8' : '2px solid #d1d5db',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      {s.emoji} {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Giocatore */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                  👤 Giocatore
+                </label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {players.map((p, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setEditForm(prev => ({ ...prev, playerIndex: idx }))}
+                      style={{
+                        padding: '10px 16px',
+                        background: editForm.playerIndex === idx ? '#2563eb' : '#f3f4f6',
+                        color: editForm.playerIndex === idx ? '#fff' : '#374151',
+                        border: editForm.playerIndex === idx ? '2px solid #1d4ed8' : '2px solid #d1d5db',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fondamentale */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                  🤲 Fondamentale
+                </label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {FUNDAMENTALS.map(f => (
+                    <button
+                      key={f.key}
+                      onClick={() => setEditForm(prev => ({ ...prev, fundamental: f.key }))}
+                      style={{
+                        padding: '10px 16px',
+                        background: editForm.fundamental === f.key ? '#2563eb' : '#f3f4f6',
+                        color: editForm.fundamental === f.key ? '#fff' : '#374151',
+                        border: editForm.fundamental === f.key ? '2px solid #1d4ed8' : '2px solid #d1d5db',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      {f.emoji} {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Direzione */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                  🎯 Dove ha colpito la palla
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxWidth: '280px', margin: '0 auto' }}>
+                  <div />
+                  <button
+                    onClick={() => setEditForm(prev => ({ ...prev, direction: 'up' }))}
+                    style={{
+                      padding: '12px',
+                      background: editForm.direction === 'up' ? '#2563eb' : '#f3f4f6',
+                      color: editForm.direction === 'up' ? '#fff' : '#374151',
+                      border: editForm.direction === 'up' ? '2px solid #1d4ed8' : '2px solid #d1d5db',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '1.5rem',
+                    }}
+                  >
+                    ▲
+                  </button>
+                  <div />
+                  <button
+                    onClick={() => setEditForm(prev => ({ ...prev, direction: 'left' }))}
+                    style={{
+                      padding: '12px',
+                      background: editForm.direction === 'left' ? '#2563eb' : '#f3f4f6',
+                      color: editForm.direction === 'left' ? '#fff' : '#374151',
+                      border: editForm.direction === 'left' ? '2px solid #1d4ed8' : '2px solid #d1d5db',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '1.5rem',
+                    }}
+                  >
+                    ◀
+                  </button>
+                  <button
+                    onClick={() => setEditForm(prev => ({ ...prev, direction: 'center' }))}
+                    style={{
+                      padding: '12px',
+                      background: editForm.direction === 'center' ? '#2563eb' : '#f3f4f6',
+                      color: editForm.direction === 'center' ? '#fff' : '#374151',
+                      border: editForm.direction === 'center' ? '2px solid #1d4ed8' : '2px solid #d1d5db',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '1.5rem',
+                    }}
+                  >
+                    ●
+                  </button>
+                  <button
+                    onClick={() => setEditForm(prev => ({ ...prev, direction: 'right' }))}
+                    style={{
+                      padding: '12px',
+                      background: editForm.direction === 'right' ? '#2563eb' : '#f3f4f6',
+                      color: editForm.direction === 'right' ? '#fff' : '#374151',
+                      border: editForm.direction === 'right' ? '2px solid #1d4ed8' : '2px solid #d1d5db',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '1.5rem',
+                    }}
+                  >
+                    ▶
+                  </button>
+                  <div />
+                  <button
+                    onClick={() => setEditForm(prev => ({ ...prev, direction: 'down' }))}
+                    style={{
+                      padding: '12px',
+                      background: editForm.direction === 'down' ? '#2563eb' : '#f3f4f6',
+                      color: editForm.direction === 'down' ? '#fff' : '#374151',
+                      border: editForm.direction === 'down' ? '2px solid #1d4ed8' : '2px solid #d1d5db',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '1.5rem',
+                    }}
+                  >
+                    ▼
+                  </button>
+                  <div />
+                </div>
+              </div>
+
+              {/* Esito */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                  ✅ Esito della Ricezione
+                </label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {OUTCOMES.map(o => (
+                    <button
+                      key={o.key}
+                      onClick={() => setEditForm(prev => ({ ...prev, outcome: o.key }))}
+                      style={{
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '12px',
+                        background: o.bg,
+                        color: o.fg,
+                        border: editForm.outcome === o.key ? '3px solid #1e40af' : 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 700,
+                        fontSize: '1.5rem',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                      }}
+                    >
+                      {o.key}
+                      <span style={{ fontSize: '9px', fontWeight: 400, marginTop: '2px' }}>{o.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Velocità */}
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                  ⚡ Velocità (km/h) - Opzionale
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="200"
+                  placeholder="es. 85"
+                  value={editForm.speed !== null && editForm.speed !== undefined ? editForm.speed : ''}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? null : parseFloat(e.target.value);
+                    setEditForm(prev => ({ ...prev, speed: isNaN(val as number) ? null : val }));
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    fontSize: '1rem',
+                    border: '2px solid #d1d5db',
+                    borderRadius: '8px',
+                  }}
+                />
+              </div>
+
+              {/* Pulsanti */}
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={cancelEditReception}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#6b7280',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                  }}
+                >
+                  ❌ Annulla
+                </button>
+                <button
+                  onClick={saveEditReception}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                  }}
+                >
+                  💾 Salva Modifiche
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
     </SoglieProvider>
