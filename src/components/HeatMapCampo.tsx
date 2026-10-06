@@ -29,15 +29,19 @@ export default function HeatMapCampo({ players, receptions }: HeatMapCampoProps)
   const [playerFilter, setPlayerFilter] = useState<string>('all');
   const [metrica, setMetrica] = useState<MetricaType>('totale');
   const [fundamentalFilter, setFundamentalFilter] = useState<string>('all');
+  const [serveZoneFilter, setServeZoneFilter] = useState<string>('all');
+  const [serveTypeFilter, setServeTypeFilter] = useState<string>('all');
 
   // Filtra le ricezioni in base ai filtri selezionati
   const filteredReceptions = useMemo(() => {
     return receptions.filter(r => {
       if (playerFilter !== 'all' && r.playerIndex !== parseInt(playerFilter)) return false;
       if (fundamentalFilter !== 'all' && r.fundamental !== fundamentalFilter) return false;
+      if (serveZoneFilter !== 'all' && r.serveZone !== parseInt(serveZoneFilter)) return false;
+      if (serveTypeFilter !== 'all' && r.serveType !== serveTypeFilter) return false;
       return true;
     });
-  }, [receptions, playerFilter, fundamentalFilter]);
+  }, [receptions, playerFilter, fundamentalFilter, serveZoneFilter, serveTypeFilter]);
 
   // Calcola le statistiche per ogni zona
   const zoneStats = useMemo(() => {
@@ -150,6 +154,28 @@ export default function HeatMapCampo({ players, receptions }: HeatMapCampoProps)
         </div>
 
         <div className="heatmap-control-group">
+          <label>Zona Provenienza Battuta:</label>
+          <select value={serveZoneFilter} onChange={(e) => setServeZoneFilter(e.target.value)}>
+            <option value="all">Tutte le zone</option>
+            <option value="1">Zona 1</option>
+            <option value="5">Zona 5</option>
+            <option value="6">Zona 6</option>
+          </select>
+        </div>
+
+        <div className="heatmap-control-group">
+          <label>Tipo Battuta:</label>
+          <select value={serveTypeFilter} onChange={(e) => setServeTypeFilter(e.target.value)}>
+            <option value="all">Tutti i tipi</option>
+            <option value="F">Float</option>
+            <option value="SF">Salto Float</option>
+            <option value="SS">Salto Spin</option>
+            <option value="SP">Splot</option>
+            <option value="FL">Flin</option>
+          </select>
+        </div>
+
+        <div className="heatmap-control-group">
           <label>Metrica:</label>
           <select value={metrica} onChange={(e) => setMetrica(e.target.value as MetricaType)}>
             <option value="totale">Totale Ricezioni</option>
@@ -192,6 +218,101 @@ export default function HeatMapCampo({ players, receptions }: HeatMapCampoProps)
               })}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Distribuzione battute per zona di provenienza */}
+      <div className="heatmap-serve-zone">
+        <h4>📍 Distribuzione Battute per Zona di Provenienza</h4>
+        <div className="heatmap-serve-zone-grid">
+          {[1, 5, 6].map(zone => {
+            const zoneReceptions = filteredReceptions.filter(r => r.serveZone === zone);
+            const zoneCount = zoneReceptions.length;
+            const zonePercentage = filteredReceptions.length > 0 
+              ? (zoneCount / filteredReceptions.length) * 100 
+              : 0;
+            
+            // Calcola metriche per questa zona di provenienza
+            const positive = zoneReceptions.filter(r => r.outcome === '#' || r.outcome === '+').length;
+            const errors = zoneReceptions.filter(r => r.outcome === '=').length;
+            const pp = zoneCount > 0 ? (positive / zoneCount) * 100 : 0;
+            const er = zoneCount > 0 ? ((positive - errors) / zoneCount) * 100 : 0;
+            
+            return (
+              <div key={zone} className="heatmap-serve-zone-item">
+                <div className="heatmap-serve-zone-header">
+                  <span className="heatmap-serve-zone-title">Zona {zone}</span>
+                  <span className="heatmap-serve-zone-count">{zoneCount} battute</span>
+                </div>
+                <div className="heatmap-serve-zone-bar">
+                  <div 
+                    className="heatmap-serve-zone-bar-fill"
+                    style={{ width: `${zonePercentage}%` }}
+                  ></div>
+                </div>
+                <div className="heatmap-serve-zone-percentage">{zonePercentage.toFixed(1)}%</div>
+                <div className="heatmap-serve-zone-metrics">
+                  <div className="heatmap-serve-zone-metric">
+                    <span className="metric-label">PP:</span>
+                    <span className="metric-value">{pp.toFixed(1)}%</span>
+                  </div>
+                  <div className="heatmap-serve-zone-metric">
+                    <span className="metric-label">ER:</span>
+                    <span className="metric-value">{er.toFixed(1)}%</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Distribuzione battute per tipo */}
+      <div className="heatmap-serve-type">
+        <h4>🏐 Distribuzione Battute per Tipo</h4>
+        <div className="heatmap-serve-type-grid">
+          {['F', 'SF', 'SS', 'SP', 'FL'].map(type => {
+            const typeLabels: Record<string, string> = {
+              'F': 'Float',
+              'SF': 'Salto Float',
+              'SS': 'Salto Spin',
+              'SP': 'Splot',
+              'FL': 'Flin'
+            };
+            const typeReceptions = filteredReceptions.filter(r => r.serveType === type);
+            const typeCount = typeReceptions.length;
+            const typePercentage = filteredReceptions.length > 0 
+              ? (typeCount / filteredReceptions.length) * 100 
+              : 0;
+            
+            if (typeCount === 0) return null;
+            
+            // Calcola metriche per questo tipo di battuta
+            const positive = typeReceptions.filter(r => r.outcome === '#' || r.outcome === '+').length;
+            const errors = typeReceptions.filter(r => r.outcome === '=').length;
+            const pp = typeCount > 0 ? (positive / typeCount) * 100 : 0;
+            const er = typeCount > 0 ? ((positive - errors) / typeCount) * 100 : 0;
+            
+            return (
+              <div key={type} className="heatmap-serve-type-item">
+                <div className="heatmap-serve-type-header">
+                  <span className="heatmap-serve-type-title">{typeLabels[type]}</span>
+                  <span className="heatmap-serve-type-count">{typeCount}</span>
+                </div>
+                <div className="heatmap-serve-type-bar">
+                  <div 
+                    className="heatmap-serve-type-bar-fill"
+                    style={{ width: `${typePercentage}%` }}
+                  ></div>
+                </div>
+                <div className="heatmap-serve-type-percentage">{typePercentage.toFixed(1)}%</div>
+                <div className="heatmap-serve-type-metrics">
+                  <span>PP: {pp.toFixed(1)}%</span>
+                  <span>ER: {er.toFixed(1)}%</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -269,6 +390,43 @@ export default function HeatMapCampo({ players, receptions }: HeatMapCampoProps)
                   }))
                   .sort((a, b) => b.errorRate - a.errorRate)[0];
                 return zoneWithErrors ? `${zoneWithErrors.zone} (${zoneWithErrors.errorRate.toFixed(1)}%)` : 'N/A';
+              })()}
+            </span>
+          </div>
+          <div className="heatmap-summary-item">
+            <span className="heatmap-summary-label">Zona provenienza più frequente:</span>
+            <span className="heatmap-summary-value">
+              {(() => {
+                const serveZoneCounts: Record<number, number> = {};
+                filteredReceptions.forEach(r => {
+                  serveZoneCounts[r.serveZone] = (serveZoneCounts[r.serveZone] || 0) + 1;
+                });
+                const maxZone = Object.entries(serveZoneCounts).reduce((max, [zone, count]) => 
+                  count > max.count ? { zone, count } : max
+                , { zone: '0', count: 0 });
+                return maxZone.count > 0 ? `Zona ${maxZone.zone} (${maxZone.count})` : 'N/A';
+              })()}
+            </span>
+          </div>
+          <div className="heatmap-summary-item">
+            <span className="heatmap-summary-label">Tipo battuta più frequente:</span>
+            <span className="heatmap-summary-value">
+              {(() => {
+                const serveTypeCounts: Record<string, number> = {};
+                const typeLabels: Record<string, string> = {
+                  'F': 'Float',
+                  'SF': 'Salto Float',
+                  'SS': 'Salto Spin',
+                  'SP': 'Splot',
+                  'FL': 'Flin'
+                };
+                filteredReceptions.forEach(r => {
+                  serveTypeCounts[r.serveType] = (serveTypeCounts[r.serveType] || 0) + 1;
+                });
+                const maxType = Object.entries(serveTypeCounts).reduce((max, [type, count]) => 
+                  count > max.count ? { type, count } : max
+                , { type: '', count: 0 });
+                return maxType.count > 0 ? `${typeLabels[maxType.type] || maxType.type} (${maxType.count})` : 'N/A';
               })()}
             </span>
           </div>
