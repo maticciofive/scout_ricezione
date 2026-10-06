@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 import './ExportPDF.css';
 
 interface Reception {
@@ -28,6 +27,78 @@ interface ExportPDFProps {
   receptions: Reception[];
 }
 
+// Helper per disegnare una tabella manualmente con jsPDF
+function drawTable(
+  doc: jsPDF,
+  headers: string[],
+  rows: string[][],
+  startY: number,
+  options: {
+    headColor?: [number, number, number];
+    margin?: number;
+    fontSize?: number;
+  } = {}
+): number {
+  const { headColor = [30, 64, 175], margin = 20, fontSize = 9 } = options;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const colWidth = (pageWidth - margin * 2) / headers.length;
+  const rowHeight = 8;
+  let yPos = startY;
+
+  // Disegna header
+  doc.setFillColor(headColor[0], headColor[1], headColor[2]);
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(fontSize);
+  doc.setFont('helvetica', 'bold');
+
+  headers.forEach((header, i) => {
+    doc.rect(margin + i * colWidth, yPos, colWidth, rowHeight, 'F');
+    doc.text(header, margin + i * colWidth + 2, yPos + 5.5);
+  });
+
+  yPos += rowHeight;
+
+  // Disegna righe
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0, 0, 0);
+
+  rows.forEach((row, rowIdx) => {
+    // Verifica se serve una nuova pagina
+    if (yPos > doc.internal.pageSize.getHeight() - 20) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    // Colore alternato per righe
+    if (rowIdx % 2 === 0) {
+      doc.setFillColor(245, 247, 250);
+      doc.rect(margin, yPos, pageWidth - margin * 2, rowHeight, 'F');
+    }
+
+    // Bordo riga
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, yPos + rowHeight, pageWidth - margin, yPos + rowHeight);
+
+    row.forEach((cell, i) => {
+      doc.text(cell, margin + i * colWidth + 2, yPos + 5.5);
+    });
+
+    yPos += rowHeight;
+  });
+
+  // Bordo esterno tabella
+  doc.setDrawColor(headColor[0], headColor[1], headColor[2]);
+  doc.rect(margin, startY, pageWidth - margin * 2, yPos - startY);
+
+  // Colonne verticali
+  doc.setDrawColor(200, 200, 200);
+  for (let i = 1; i < headers.length; i++) {
+    doc.line(margin + i * colWidth, startY, margin + i * colWidth, yPos);
+  }
+
+  return yPos + 10;
+}
+
 export default function ExportPDF({ players, receptions }: ExportPDFProps) {
   const [exporting, setExporting] = useState(false);
   const [reportType, setReportType] = useState<'completo' | 'giocatore' | 'sessione'>('completo');
@@ -41,41 +112,53 @@ export default function ExportPDF({ players, receptions }: ExportPDFProps) {
       const pageWidth = doc.internal.pageSize.getWidth();
       let yPos = 20;
 
-      // Titolo del report
-      doc.setFontSize(20);
+      // === TITOLO DEL REPORT ===
+      doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 64, 175);
       doc.text('Report Scouting Ricezione', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 10;
+      yPos += 12;
 
-      // Data del report
-      doc.setFontSize(10);
+      // Sottotitolo
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
       doc.text(`Generato il: ${new Date().toLocaleString('it-IT')}`, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 8;
+      doc.text(`Totale ricezioni: ${receptions.length}`, pageWidth / 2, yPos, { align: 'center' });
       yPos += 15;
 
+      // Linea separatore
+      doc.setDrawColor(30, 64, 175);
+      doc.setLineWidth(0.5);
+      doc.line(20, yPos, pageWidth - 20, yPos);
+      yPos += 10;
+
       if (reportType === 'completo' || reportType === 'giocatore') {
-        // Statistiche generali
-        const giocatoriDaAnalizzare = reportType === 'giocatore' 
-          ? [players[selectedPlayer]] 
+        const giocatoriDaAnalizzare = reportType === 'giocatore'
+          ? [players[selectedPlayer]]
           : players;
 
         giocatoriDaAnalizzare.forEach((player, playerIdx) => {
-          const playerReceptions = receptions.filter(r => r.playerIndex === (reportType === 'giocatore' ? selectedPlayer : playerIdx));
-          
+          const playerIndex = reportType === 'giocatore' ? selectedPlayer : playerIdx;
+          const playerReceptions = receptions.filter(r => r.playerIndex === playerIndex);
+
           if (playerReceptions.length === 0) return;
 
-          // Nome giocatore
-          if (yPos > 250) {
+          // Verifica nuova pagina
+          if (yPos > 230) {
             doc.addPage();
             yPos = 20;
           }
 
+          // === NOME GIOCATORE ===
           doc.setFontSize(16);
           doc.setFont('helvetica', 'bold');
+          doc.setTextColor(30, 64, 175);
           doc.text(player.name, 20, yPos);
           yPos += 8;
 
-          // Statistiche generali
+          // === STATISTICHE GENERALI ===
           const totale = playerReceptions.length;
           const perfette = playerReceptions.filter(r => r.outcome === '#').length;
           const positive = playerReceptions.filter(r => r.outcome === '+').length;
@@ -91,11 +174,13 @@ export default function ExportPDF({ players, receptions }: ExportPDFProps) {
 
           doc.setFontSize(10);
           doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60, 60, 60);
           doc.text(`Totale ricezioni: ${totale}`, 20, yPos);
-          yPos += 6;
+          yPos += 8;
 
-          // Tabella esiti
-          const esitiData = [
+          // === TABELLA ESITI ===
+          const esitiHeaders = ['Esito', 'Numero', 'Percentuale'];
+          const esitiRows = [
             ['Perfette (#)', perfette.toString(), `${((perfette / totale) * 100).toFixed(1)}%`],
             ['Positive (+)', positive.toString(), `${((positive / totale) * 100).toFixed(1)}%`],
             ['Esclamative (!)', esclamative.toString(), `${((esclamative / totale) * 100).toFixed(1)}%`],
@@ -104,47 +189,9 @@ export default function ExportPDF({ players, receptions }: ExportPDFProps) {
             ['Errori (=)', errori.toString(), `${((errori / totale) * 100).toFixed(1)}%`],
           ];
 
-          (doc as any).autoTable({
-            startY: yPos,
-            head: [['Esito', 'Numero', 'Percentuale']],
-            body: esitiData,
-            theme: 'striped',
-            headStyles: { fillColor: [30, 64, 175] },
-            margin: { left: 20 },
-          });
+          yPos = drawTable(doc, esitiHeaders, esitiRows, yPos);
 
-          yPos = (doc as any).lastAutoTable.finalY + 10;
-
-          // Metriche principali
-          if (yPos > 240) {
-            doc.addPage();
-            yPos = 20;
-          }
-
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Metriche Principali', 20, yPos);
-          yPos += 8;
-
-          const metricheData = [
-            ['PP (Percentuale Positiva)', `${pp.toFixed(1)}%`],
-            ['ER (Efficienza)', `${er.toFixed(1)}%`],
-            ['PE (Percentuale Errori)', `${pe.toFixed(1)}%`],
-            ['PN (Percentuale Negativa)', `${pn.toFixed(1)}%`],
-          ];
-
-          (doc as any).autoTable({
-            startY: yPos,
-            head: [['Metrica', 'Valore']],
-            body: metricheData,
-            theme: 'striped',
-            headStyles: { fillColor: [30, 64, 175] },
-            margin: { left: 20 },
-          });
-
-          yPos = (doc as any).lastAutoTable.finalY + 10;
-
-          // Statistiche per lato
+          // === METRICHE PRINCIPALI ===
           if (yPos > 220) {
             doc.addPage();
             yPos = 20;
@@ -152,11 +199,35 @@ export default function ExportPDF({ players, receptions }: ExportPDFProps) {
 
           doc.setFontSize(12);
           doc.setFont('helvetica', 'bold');
+          doc.setTextColor(30, 64, 175);
+          doc.text('Metriche Principali', 20, yPos);
+          yPos += 8;
+
+          const metricheHeaders = ['Metrica', 'Valore', 'Giudizio'];
+          const metricheRows = [
+            ['PP (Percentuale Positiva)', `${pp.toFixed(1)}%`, pp >= 55 ? 'Ottimo' : pp >= 45 ? 'Buono' : 'Da migliorare'],
+            ['ER (Efficienza)', `${er.toFixed(1)}%`, er >= 45 ? 'Ottimo' : er >= 40 ? 'Buono' : 'Insufficiente'],
+            ['PE (Percentuale Errori)', `${pe.toFixed(1)}%`, pe <= 5 ? 'Ottimo' : pe <= 15 ? 'Attenzione' : 'Critico'],
+            ['PN (Percentuale Negativa)', `${pn.toFixed(1)}%`, pn <= 10 ? 'Ottimo' : pn <= 25 ? 'Attenzione' : 'Critico'],
+          ];
+
+          yPos = drawTable(doc, metricheHeaders, metricheRows, yPos);
+
+          // === PERFORMANCE PER LATO ===
+          if (yPos > 200) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(30, 64, 175);
           doc.text('Performance per Lato', 20, yPos);
           yPos += 8;
 
           const lati = ['Sinistra', 'Centro', 'Destra'];
-          const latoData = lati.map(lato => {
+          const latoHeaders = ['Lato', 'Totale', 'PP', 'ER'];
+          const latoRows = lati.map(lato => {
             const latoReceptions = playerReceptions.filter(r => r.side === lato);
             const latoTotale = latoReceptions.length;
             const latoPositive = latoReceptions.filter(r => r.outcome === '#' || r.outcome === '+').length;
@@ -167,16 +238,37 @@ export default function ExportPDF({ players, receptions }: ExportPDFProps) {
             return [lato, latoTotale.toString(), `${latoPP.toFixed(1)}%`, `${latoER.toFixed(1)}%`];
           });
 
-          (doc as any).autoTable({
-            startY: yPos,
-            head: [['Lato', 'Totale', 'PP', 'ER']],
-            body: latoData,
-            theme: 'striped',
-            headStyles: { fillColor: [30, 64, 175] },
-            margin: { left: 20 },
+          yPos = drawTable(doc, latoHeaders, latoRows, yPos);
+
+          // === PERFORMANCE PER FONDAMENTALE ===
+          if (yPos > 200) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(30, 64, 175);
+          doc.text('Performance per Fondamentale', 20, yPos);
+          yPos += 8;
+
+          const fondHeaders = ['Fondamentale', 'Totale', 'PP', 'ER', 'PE'];
+          const fondRows = [
+            { key: 'B', label: 'Bagher' },
+            { key: 'P', label: 'Palleggio' },
+          ].map(f => {
+            const fondReceptions = playerReceptions.filter(r => r.fundamental === f.key);
+            const fondTotale = fondReceptions.length;
+            const fondPositive = fondReceptions.filter(r => r.outcome === '#' || r.outcome === '+').length;
+            const fondErrors = fondReceptions.filter(r => r.outcome === '=').length;
+            const fondPP = fondTotale > 0 ? (fondPositive / fondTotale) * 100 : 0;
+            const fondER = fondTotale > 0 ? ((fondPositive - fondErrors) / fondTotale) * 100 : 0;
+            const fondPE = fondTotale > 0 ? (fondErrors / fondTotale) * 100 : 0;
+
+            return [f.label, fondTotale.toString(), `${fondPP.toFixed(1)}%`, `${fondER.toFixed(1)}%`, `${fondPE.toFixed(1)}%`];
           });
 
-          yPos = (doc as any).lastAutoTable.finalY + 15;
+          yPos = drawTable(doc, fondHeaders, fondRows, yPos);
 
           // Separatore tra giocatori
           if (reportType === 'completo' && playerIdx < giocatoriDaAnalizzare.length - 1) {
@@ -185,16 +277,17 @@ export default function ExportPDF({ players, receptions }: ExportPDFProps) {
               yPos = 20;
             }
             doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.3);
             doc.line(20, yPos, pageWidth - 20, yPos);
-            yPos += 10;
+            yPos += 15;
           }
         });
       }
 
       if (reportType === 'sessione') {
-        // Report per sessione
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 64, 175);
         doc.text('Report per Sessione', 20, yPos);
         yPos += 10;
 
@@ -206,38 +299,35 @@ export default function ExportPDF({ players, receptions }: ExportPDFProps) {
           sessioni[data].push(r);
         });
 
-        Object.entries(sessioni).forEach(([data, sessionReceptions]) => {
-          if (yPos > 240) {
-            doc.addPage();
-            yPos = 20;
-          }
-
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.text(`Sessione: ${data}`, 20, yPos);
-          yPos += 8;
-
+        const sessionHeaders = ['Data', 'Totale', 'PP', 'ER', 'PE'];
+        const sessionRows = Object.entries(sessioni).map(([data, sessionReceptions]) => {
           const totale = sessionReceptions.length;
           const positive = sessionReceptions.filter(r => r.outcome === '#' || r.outcome === '+').length;
           const errors = sessionReceptions.filter(r => r.outcome === '=').length;
           const pp = (positive / totale) * 100;
           const er = ((positive - errors) / totale) * 100;
+          const pe = (errors / totale) * 100;
 
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
-          doc.text(`Totale ricezioni: ${totale}`, 20, yPos);
-          yPos += 6;
-          doc.text(`PP: ${pp.toFixed(1)}% | ER: ${er.toFixed(1)}%`, 20, yPos);
-          yPos += 10;
+          return [data, totale.toString(), `${pp.toFixed(1)}%`, `${er.toFixed(1)}%`, `${pe.toFixed(1)}%`];
         });
+
+        yPos = drawTable(doc, sessionHeaders, sessionRows, yPos);
       }
 
-      // Footer su tutte le pagine
-      const pageCount = (doc as any).internal.getNumberOfPages();
+      // === FOOTER SU TUTTE LE PAGINE ===
+      const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
+        
+        // Linea superiore footer
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.line(20, doc.internal.pageSize.getHeight() - 15, pageWidth - 20, doc.internal.pageSize.getHeight() - 15);
+        
+        // Testo footer
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
+        doc.setTextColor(120, 120, 120);
         doc.text(
           `Pagina ${i} di ${pageCount} - Generato da Scouting Ricezione Pallavolo`,
           pageWidth / 2,
@@ -246,14 +336,15 @@ export default function ExportPDF({ players, receptions }: ExportPDFProps) {
         );
       }
 
-      // Salva il PDF
+      // === SALVA IL PDF ===
       const fileName = `report_scouting_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
 
       alert('✅ Report PDF generato con successo!');
     } catch (error) {
       console.error('Errore durante la generazione del PDF:', error);
-      alert('❌ Errore durante la generazione del PDF. Controlla la console per i dettagli.');
+      const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+      alert(`❌ Errore durante la generazione del PDF:\n\n${errorMessage}`);
     } finally {
       setExporting(false);
     }
@@ -266,7 +357,7 @@ export default function ExportPDF({ players, receptions }: ExportPDFProps) {
       <div className="export-pdf-controls">
         <div className="export-pdf-control-group">
           <label>Tipo di Report:</label>
-          <select value={reportType} onChange={(e) => setReportType(e.target.value as any)}>
+          <select value={reportType} onChange={(e) => setReportType(e.target.value as 'completo' | 'giocatore' | 'sessione')}>
             <option value="completo">Report Completo (tutti i giocatori)</option>
             <option value="giocatore">Report Singolo Giocatore</option>
             <option value="sessione">Report per Sessione</option>
@@ -303,8 +394,9 @@ export default function ExportPDF({ players, receptions }: ExportPDFProps) {
         <p><strong>Contenuto del report:</strong></p>
         <ul>
           <li>Statistiche generali (totale ricezioni, distribuzione esiti)</li>
-          <li>Metriche principali (PP, ER, PE, PN)</li>
+          <li>Metriche principali (PP, ER, PE, PN) con giudizi</li>
           <li>Performance per lato (Sinistra, Centro, Destra)</li>
+          <li>Performance per fondamentale (Bagher, Palleggio)</li>
           <li>Formattazione professionale pronta per la stampa</li>
         </ul>
       </div>
