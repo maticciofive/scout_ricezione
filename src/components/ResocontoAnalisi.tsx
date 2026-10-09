@@ -40,6 +40,7 @@ interface Colpo {
   serveZone?: number;
   speedCategory?: string;
   serveTypology?: string;
+  speed?: number | null;
 }
 
 interface Giocatore {
@@ -60,6 +61,24 @@ export default function ResocontoAnalisi({ giocatori, colpi }: ResocontoAnalisiP
   const analisiList: AnalisiGiocatore[] = giocatori.map((g, index) => 
     generaAnalisiCompleta(index, g.name, colpi)
   );
+
+  // Calcola statistiche velocità per ogni giocatore
+  const statisticheVelocita = giocatori.map((g, index) => {
+    const colpiGiocatore = colpi.filter(c => c.playerIndex === index && c.speed !== null && c.speed !== undefined);
+    if (colpiGiocatore.length === 0) return null;
+    
+    const velocitaValues = colpiGiocatore.map(c => c.speed as number);
+    const velocitaMedia = velocitaValues.reduce((a, b) => a + b, 0) / velocitaValues.length;
+    const velocitaMin = Math.min(...velocitaValues);
+    const velocitaMax = Math.max(...velocitaValues);
+    
+    return {
+      totale: colpiGiocatore.length,
+      media: velocitaMedia,
+      min: velocitaMin,
+      max: velocitaMax,
+    };
+  });
 
   const handleEsporta = () => {
     esportaResoconto(analisiList);
@@ -215,6 +234,27 @@ export default function ResocontoAnalisi({ giocatori, colpi }: ResocontoAnalisiP
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+
+                  {/* Analisi Velocità del Servizio */}
+                  {statisticheVelocita[idx] && (
+                    <div className="resoconto-sezione">
+                      <h4>⚡ Analisi Velocità del Servizio</h4>
+                      <div className="resoconto-velocita-stats">
+                        <div className="velocita-stat-item">
+                          <span className="velocita-stat-label">Ricezioni con velocità:</span>
+                          <span className="velocita-stat-value">{statisticheVelocita[idx]!.totale}</span>
+                        </div>
+                        <div className="velocita-stat-item">
+                          <span className="velocita-stat-label">Velocità media:</span>
+                          <span className="velocita-stat-value">{statisticheVelocita[idx]!.media.toFixed(1)} km/h</span>
+                        </div>
+                        <div className="velocita-stat-item">
+                          <span className="velocita-stat-label">Range:</span>
+                          <span className="velocita-stat-value">{statisticheVelocita[idx]!.min.toFixed(0)} - {statisticheVelocita[idx]!.max.toFixed(0)} km/h</span>
+                        </div>
+                      </div>
                     </div>
                   )}
 

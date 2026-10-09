@@ -300,6 +300,35 @@
   line-height: 1.6;
 }
 
+/* Analisi Velocità */
+.resoconto-velocita-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.velocita-stat-item {
+  background: #f0f9ff;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.velocita-stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.velocita-stat-value {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e40af;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .resoconto-container {
