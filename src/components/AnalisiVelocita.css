@@ -1,0 +1,230 @@
+.analisi-velocita-container {
+  background: white;
+  border-radius: 12px;
+  padding: clamp(16px, 3vw, 24px);
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.analisi-velocita-title {
+  margin: 0 0 20px 0;
+  color: #1e40af;
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+  text-align: center;
+}
+
+.analisi-velocita-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.analisi-velocita-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.analisi-velocita-control-group label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.analisi-velocita-input,
+.analisi-velocita-control-group select {
+  padding: 8px 12px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.analisi-velocita-input:hover,
+.analisi-velocita-control-group select:hover {
+  border-color: #3b82f6;
+}
+
+.analisi-velocita-input:focus,
+.analisi-velocita-control-group select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.analisi-velocita-info {
+  padding: 12px;
+  background: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.analisi-velocita-info p {
+  margin: 0;
+  color: #1e40af;
+  font-size: 0.9rem;
+}
+
+.analisi-velocita-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.analisi-velocita-player {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-left: 4px solid #3b82f6;
+}
+
+.analisi-velocita-player-name {
+  margin: 0 0 16px 0;
+  color: #1e40af;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.analisi-velocita-stats-base {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.analisi-velocita-section {
+  margin-bottom: 24px;
+}
+
+.analisi-velocita-section h4 {
+  margin: 0 0 12px 0;
+  color: #374151;
+  font-size: 1.1rem;
+}
+
+.range-grid,
+.esito-grid,
+.zona-grid,
+.lato-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.range-item,
+.esito-item,
+.zona-item,
+.lato-item {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.range-header,
+.esito-label,
+.zona-label,
+.lato-label {
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.range-stats,
+.esito-stats,
+.zona-stats,
+.lato-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.range-stats strong,
+.esito-stats strong,
+.zona-stats strong,
+.lato-stats strong {
+  color: #374151;
+}
+
+.analisi-velocita-difficolta {
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  padding: 16px;
+  border-radius: 6px;
+}
+
+.analisi-velocita-difficolta h4 {
+  margin: 0 0 12px 0;
+  color: #92400e;
+  font-size: 1.1rem;
+}
+
+.difficolta-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.difficolta-item {
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #92400e;
+}
+
+.difficolta-item strong {
+  color: #78350f;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .analisi-velocita-controls {
+    grid-template-columns: 1fr;
+  }
+  
+  .range-grid,
+  .esito-grid,
+  .zona-grid,
+  .lato-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .analisi-velocita-stats-base {
+    grid-template-columns: 1fr;
+  }
+}

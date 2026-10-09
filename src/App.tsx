@@ -10,6 +10,8 @@ import CampoGiocatoriLiberi from './components/CampoGiocatoriLiberi'; // NUOVO -
 import HeatMapCampo from './components/HeatMapCampo'; // NUOVO - Heat Map del Campo
 import ConfrontoGiocatori from './components/ConfrontoGiocatori'; // NUOVO - Confronto tra Giocatori
 import ExportPDF from './components/ExportPDF'; // NUOVO - Export PDF Professionale
+import AnalisiVelocita from './components/AnalisiVelocita'; // NUOVO - Analisi Velocità del Servizio
+import GraficiProfessionali from './components/GraficiProfessionali'; // NUOVO - Grafici Professionali
 
 interface Player {
   id: number;
@@ -1830,6 +1832,12 @@ export default function App() {
 
         {/* NUOVO: Export PDF Professionale */}
         <ExportPDF players={players} receptions={receptions} />
+
+        {/* NUOVO: Analisi Velocità del Servizio */}
+        <AnalisiVelocita players={players} receptions={receptions} />
+
+        {/* NUOVO: Grafici Professionali */}
+        <GraficiProfessionali players={players} receptions={receptions} />
 
         {/* NUOVO: Modal Modifica Ricezione */}
         {editingReception && (
