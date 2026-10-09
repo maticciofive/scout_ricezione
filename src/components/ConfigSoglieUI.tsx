@@ -87,6 +87,7 @@ export default function ConfigSoglieUI() {
 
     setErrori([]);
     aggiornaSoglie(soglieLocali);
+    alert('✅ Soglie salvate con successo! Le modifiche saranno applicate immediatamente a tutte le tabelle.');
   };
 
   /**

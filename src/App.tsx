@@ -637,7 +637,9 @@ export default function App() {
   const getHighlightBg = (n: number, t: number, tipo: 'positivo' | 'negativo' | 'errore' = 'positivo'): string => {
     if (t === 0) return 'transparent';
     const percentage = (n / t) * 100;
+    console.log('getHighlightBg:', { n, t, percentage, tipo, soglie });
     const stato = getStatoColore(tipo, percentage, soglie);
+    console.log('getStatoColore result:', stato);
     return getColoreCSS(stato);
   };
 
