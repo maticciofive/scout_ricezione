@@ -1367,16 +1367,36 @@ export default function App() {
               <tbody>
                 {players.map((p, idx) => {
                   const { total, counts } = getOutcomeStats(r => r.playerIndex === idx);
+                  // Calcola somme per colorazione basata su totali
+                  const sommaPositivi = (counts['#'] || 0) + (counts['+'] || 0);
+                  const sommaNegativi = (counts['-'] || 0) + (counts['/'] || 0) + (counts['='] || 0);
                   return (
                     <tr key={idx} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
                       <td style={tdStyle}>{p.name}</td>
                       <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
-                      {OUTCOMES.map(o => (
-                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(counts[o.key], total, getTipoEsito(o.key)) }}>
-                          <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
-                          <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
-                        </td>
-                      ))}
+                      {OUTCOMES.map(o => {
+                        // Determina il valore da usare per la colorazione
+                        let valoreColorazione = counts[o.key];
+                        let tipoEsito = getTipoEsito(o.key);
+                        
+                        // Per esiti positivi (# e +), usa la somma
+                        if (o.key === '#' || o.key === '+') {
+                          valoreColorazione = sommaPositivi;
+                          tipoEsito = 'positivo';
+                        }
+                        // Per esiti negativi (-, /, =), usa la somma
+                        else if (o.key === '-' || o.key === '/' || o.key === '=') {
+                          valoreColorazione = sommaNegativi;
+                          tipoEsito = 'negativo';
+                        }
+                        
+                        return (
+                          <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(valoreColorazione, total, tipoEsito) }}>
+                            <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
+                            <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
@@ -1385,8 +1405,27 @@ export default function App() {
                   <td style={{ ...tdStyle, textAlign: 'center' }}>{receptions.length}</td>
                   {OUTCOMES.map(o => {
                     const c = receptions.filter(r => r.outcome === o.key).length;
+                    // Calcola somme per colorazione basata su totali
+                    const sommaPositivi = receptions.filter(r => r.outcome === '#' || r.outcome === '+').length;
+                    const sommaNegativi = receptions.filter(r => r.outcome === '-' || r.outcome === '/' || r.outcome === '=').length;
+                    
+                    // Determina il valore da usare per la colorazione
+                    let valoreColorazione = c;
+                    let tipoEsito = getTipoEsito(o.key);
+                    
+                    // Per esiti positivi (# e +), usa la somma
+                    if (o.key === '#' || o.key === '+') {
+                      valoreColorazione = sommaPositivi;
+                      tipoEsito = 'positivo';
+                    }
+                    // Per esiti negativi (-, /, =), usa la somma
+                    else if (o.key === '-' || o.key === '/' || o.key === '=') {
+                      valoreColorazione = sommaNegativi;
+                      tipoEsito = 'negativo';
+                    }
+                    
                     return (
-                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(c, receptions.length, getTipoEsito(o.key)) }}>
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(valoreColorazione, receptions.length, tipoEsito) }}>
                         <div>{c}</div>
                         <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, receptions.length)}</div>
                       </td>
@@ -1468,16 +1507,36 @@ export default function App() {
               <tbody>
                 {players.map((p, idx) => {
                   const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.fundamental === 'B');
+                  // Calcola somme per colorazione basata su totali
+                  const sommaPositivi = (counts['#'] || 0) + (counts['+'] || 0);
+                  const sommaNegativi = (counts['-'] || 0) + (counts['/'] || 0) + (counts['='] || 0);
                   return (
                     <tr key={idx} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
                       <td style={tdStyle}>{p.name}</td>
                       <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
-                      {OUTCOMES.map(o => (
-                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(counts[o.key], total) }}>
-                          <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
-                          <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
-                        </td>
-                      ))}
+                      {OUTCOMES.map(o => {
+                        // Determina il valore da usare per la colorazione
+                        let valoreColorazione = counts[o.key];
+                        let tipoEsito = getTipoEsito(o.key);
+                        
+                        // Per esiti positivi (# e +), usa la somma
+                        if (o.key === '#' || o.key === '+') {
+                          valoreColorazione = sommaPositivi;
+                          tipoEsito = 'positivo';
+                        }
+                        // Per esiti negativi (-, /, =), usa la somma
+                        else if (o.key === '-' || o.key === '/' || o.key === '=') {
+                          valoreColorazione = sommaNegativi;
+                          tipoEsito = 'negativo';
+                        }
+                        
+                        return (
+                          <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(valoreColorazione, total, tipoEsito) }}>
+                            <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
+                            <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
@@ -1487,8 +1546,27 @@ export default function App() {
                   {OUTCOMES.map(o => {
                     const c = receptions.filter(r => r.outcome === o.key && r.fundamental === 'B').length;
                     const total = receptions.filter(r => r.fundamental === 'B').length;
+                    // Calcola somme per colorazione basata su totali
+                    const sommaPositivi = receptions.filter(r => (r.outcome === '#' || r.outcome === '+') && r.fundamental === 'B').length;
+                    const sommaNegativi = receptions.filter(r => (r.outcome === '-' || r.outcome === '/' || r.outcome === '=') && r.fundamental === 'B').length;
+                    
+                    // Determina il valore da usare per la colorazione
+                    let valoreColorazione = c;
+                    let tipoEsito = getTipoEsito(o.key);
+                    
+                    // Per esiti positivi (# e +), usa la somma
+                    if (o.key === '#' || o.key === '+') {
+                      valoreColorazione = sommaPositivi;
+                      tipoEsito = 'positivo';
+                    }
+                    // Per esiti negativi (-, /, =), usa la somma
+                    else if (o.key === '-' || o.key === '/' || o.key === '=') {
+                      valoreColorazione = sommaNegativi;
+                      tipoEsito = 'negativo';
+                    }
+                    
                     return (
-                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(c, total) }}>
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(valoreColorazione, total, tipoEsito) }}>
                         <div>{c}</div>
                         <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, total)}</div>
                       </td>
@@ -1519,16 +1597,36 @@ export default function App() {
               <tbody>
                 {players.map((p, idx) => {
                   const { total, counts } = getOutcomeStats(r => r.playerIndex === idx && r.fundamental === 'P');
+                  // Calcola somme per colorazione basata su totali
+                  const sommaPositivi = (counts['#'] || 0) + (counts['+'] || 0);
+                  const sommaNegativi = (counts['-'] || 0) + (counts['/'] || 0) + (counts['='] || 0);
                   return (
                     <tr key={idx} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
                       <td style={tdStyle}>{p.name}</td>
                       <td style={{ ...tdStyle, fontWeight: 700, textAlign: 'center' }}>{total}</td>
-                      {OUTCOMES.map(o => (
-                        <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(counts[o.key], total) }}>
-                          <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
-                          <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
-                        </td>
-                      ))}
+                      {OUTCOMES.map(o => {
+                        // Determina il valore da usare per la colorazione
+                        let valoreColorazione = counts[o.key];
+                        let tipoEsito = getTipoEsito(o.key);
+                        
+                        // Per esiti positivi (# e +), usa la somma
+                        if (o.key === '#' || o.key === '+') {
+                          valoreColorazione = sommaPositivi;
+                          tipoEsito = 'positivo';
+                        }
+                        // Per esiti negativi (-, /, =), usa la somma
+                        else if (o.key === '-' || o.key === '/' || o.key === '=') {
+                          valoreColorazione = sommaNegativi;
+                          tipoEsito = 'negativo';
+                        }
+                        
+                        return (
+                          <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(valoreColorazione, total, tipoEsito) }}>
+                            <div style={{ fontWeight: 700 }}>{counts[o.key]}</div>
+                            <div style={{ fontSize: '10px', color: '#6b7280' }}>{pct(counts[o.key], total)}</div>
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
@@ -1538,8 +1636,27 @@ export default function App() {
                   {OUTCOMES.map(o => {
                     const c = receptions.filter(r => r.outcome === o.key && r.fundamental === 'P').length;
                     const total = receptions.filter(r => r.fundamental === 'P').length;
+                    // Calcola somme per colorazione basata su totali
+                    const sommaPositivi = receptions.filter(r => (r.outcome === '#' || r.outcome === '+') && r.fundamental === 'P').length;
+                    const sommaNegativi = receptions.filter(r => (r.outcome === '-' || r.outcome === '/' || r.outcome === '=') && r.fundamental === 'P').length;
+                    
+                    // Determina il valore da usare per la colorazione
+                    let valoreColorazione = c;
+                    let tipoEsito = getTipoEsito(o.key);
+                    
+                    // Per esiti positivi (# e +), usa la somma
+                    if (o.key === '#' || o.key === '+') {
+                      valoreColorazione = sommaPositivi;
+                      tipoEsito = 'positivo';
+                    }
+                    // Per esiti negativi (-, /, =), usa la somma
+                    else if (o.key === '-' || o.key === '/' || o.key === '=') {
+                      valoreColorazione = sommaNegativi;
+                      tipoEsito = 'negativo';
+                    }
+                    
                     return (
-                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(c, total) }}>
+                      <td key={o.key} style={{ ...tdStyle, textAlign: 'center', background: getHighlightBg(valoreColorazione, total, tipoEsito) }}>
                         <div>{c}</div>
                         <div style={{ fontSize: '10px', color: '#374151' }}>{pct(c, total)}</div>
                       </td>
